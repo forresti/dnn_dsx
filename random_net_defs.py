@@ -1,13 +1,60 @@
 
+'''
+TODO:
+- dropout
+- accuracy + softmax
+
+'''
+
 def dataLayerStr_deploy(batch, channels, height, width):
-    dataLayerStr = '\n \
-    name: "AlexNet" \n \
+    dataStr = '\n \
+    name: "RandomNet" \n \
     input: "data_layer" \n \
     input_dim: ' + str(batch) + '\n \
     input_dim: ' + str(channels) + '\n \
     input_dim: ' + str(height) + '\n \
     input_dim: ' + str(width) 
-    return dataLayerStr
+    return dataStr
+
+def dataLayerStr_trainval(train_dbType, train_db, test_dbType, test_db, batch_size_train, \
+                          batch_size_test, crop_size, imagenet_mean_path):
+    dataStr = '\n \
+    name: "RandomNet" \n \
+    layers { \n \
+      name: "data_layer" \n \
+      type: DATA \n \
+      top: "data_layer" \n \
+      top: "label" \n \
+      data_param { \n \
+        source: "' + train_db + '" \n \
+        backend: ' + train_dbType + '\n \
+        batch_size: ' + str(batch_size_train) + '\n \
+      } \n \
+      transform_param { \n \
+        crop_size: ' + str(crop_size) + '\n \
+        mean_file: "' + imagenet_mean_path + '"\n \
+        mirror: true \n \
+      } \n \
+      include: { phase: TRAIN } \n \
+    } \n \
+    layers { \n \
+      name: "data_layer" \n \
+      type: DATA \n \
+      top: "data_layer" \n \
+      top: "label"  \n \
+      data_param { \n \
+        source: "' + test_db + '" \n \
+        backend: ' + test_dbType + ' \n \
+        batch_size: ' + str(batch_size_test) + ' \n \
+      } \n \
+      transform_param { \n \
+        crop_size: ' + str(crop_size) + '\n \
+        mean_file: "' + imagenet_mean_path + '"\n \
+        mirror: false \n \
+      } \n \
+      include: { phase: TEST } \n \
+    }'
+    return dataStr
 
 def convLayerStr(name, bottom, top, num_output, kernel_size, stride):
 
@@ -84,3 +131,27 @@ def lrnLayerStr(name, bottom, top, local_size):
     }'
     return lrnStr
 
+def fcLayerStr(name, bottom, top, num_output):
+    fcStr = '\n \
+    layers{ \n \
+      name: "' + name + '"\n \
+      type: INNER_PRODUCT \n \
+      bottom: "' + bottom  + '"\n \
+      top: "' + top + '"\n \
+      blobs_lr: 1 \n \
+      blobs_lr: 2 \n \
+      weight_decay: 1 \n \
+      weight_decay: 0 \n \
+      inner_product_param { \n \
+        num_output: ' + str(num_output) + '\n \
+        weight_filler { \n \
+          type: "gaussian" \n \
+          std: 0.005 \n \
+        }\n \
+        bias_filler {\n \
+          type: "constant"\n \
+          value: 0.1\n \
+        } \n \
+      }\n \
+    }'
+    return fcStr

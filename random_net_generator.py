@@ -28,7 +28,7 @@ class RandomDNN:
 
         #print myName, ' kernelsize = ', kernelsize, ' num_output = ', num_output, ' stride = ', stride
         retStr = random_net_defs.convLayerStr(myName, bottom, top, num_output, kernelsize, stride) 
-        print retStr
+        
         return {'name':myName, 'prototxt':retStr}
 
     def poolLayer(self, layerIdx, prevLayerStr):
@@ -41,7 +41,7 @@ class RandomDNN:
 
         #print myName, ' kernelsize = ', kernelsize, ' stride = ', stride, ' poolType = ', poolType
         retStr = random_net_defs.poolLayerStr(myName, bottom, top, kernelsize, stride, poolType)
-        print retStr
+        
         return {'name':myName, 'prototxt':retStr}
 
 
@@ -52,7 +52,7 @@ class RandomDNN:
 
         #print myName
         retStr = random_net_defs.reluLayerStr(myName, bottom, top)
-        print retStr
+        
         return {'name':myName, 'prototxt':retStr}
 
     #alexnet, caffenet, GoogLeNet: all lrn layers have local_size=5
@@ -64,7 +64,7 @@ class RandomDNN:
 
         #print myName, ' local_size = ', local_size
         retStr = random_net_defs.lrnLayerStr(myName, bottom, top, local_size)
-        print retStr
+        
         return {'name':myName, 'prototxt':retStr}
 
     #CNN composition grammar
@@ -80,12 +80,13 @@ class RandomDNN:
 #TODO: move this inside the RandomDNN class?
 def gen_DNN():
     net = RandomDNN()
-    data_layer_str = random_net_defs.dataLayerStr_deploy(256, 3, 227, 227)
+    #data_layer_str = random_net_defs.dataLayerStr_deploy(256, 3, 227, 227)
+    data_layer_str = random_net_defs.dataLayerStr_trainval('LMDB', '/path/to/train_lmdb', 'LMDB', '/path/to/test_lmdb', 256, 50, 227, 'examples/imagenet/ilsvrc12_train_lmdb') 
     print data_layer_str
 
     prev_layer_type='data'
     prev_layer_name='data_layer'
-    for i in xrange(0, 20):
+    for i in xrange(0, 10):
         curr_layer_type = net.chooseNextLayer(prev_layer_type)
         if curr_layer_type == 'conv':
             curr_layer_dict = net.convLayer(i, prev_layer_name)
@@ -96,6 +97,7 @@ def gen_DNN():
         if curr_layer_type == 'lrn':
             curr_layer_dict = net.lrnLayer(i, prev_layer_name)
 
+        print curr_layer_dict['prototxt']
         prev_layer_name = curr_layer_dict['name']
         prev_layer_type = curr_layer_type
 
