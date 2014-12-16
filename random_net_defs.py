@@ -1,11 +1,4 @@
 
-'''
-TODO:
-- dropout
-- accuracy + softmax
-
-'''
-
 def dataLayerStr_deploy(batch, channels, height, width):
     dataStr = '\n \
     name: "RandomNet" \n \
@@ -146,7 +139,7 @@ def fcLayerStr(name, bottom, top, num_output):
         num_output: ' + str(num_output) + '\n \
         weight_filler { \n \
           type: "gaussian" \n \
-          std: 0.005 \n \
+          std: 0.01 \n \
         }\n \
         bias_filler {\n \
           type: "constant"\n \
@@ -155,3 +148,36 @@ def fcLayerStr(name, bottom, top, num_output):
       }\n \
     }'
     return fcStr
+
+#everyone uses dropout_ratio=0.5 ... can mess with it someday.
+def dropoutLayerStr(name, bottom, top):
+    dropStr = '\n \
+    layers { \n \
+      name: "' + name + '"\n \
+      type: DROPOUT \n \
+      bottom: "' + bottom  + '"\n \
+      top: "' + top + '"\n \
+      dropout_param { \n \
+        dropout_ratio: 0.5 \n \
+      } \n \
+    }'
+    return dropStr
+
+def scoringTrainvalStr(bottom):
+    scoringStr = '\n \
+    layers { \n \
+      name: "accuracy" \n \
+      type: ACCURACY \n \
+      bottom: "' + bottom  + '"\n \
+      bottom: "label" \n \
+      top: "accuracy" \n \
+      include: { phase: TEST } \n \
+    } \n \
+    layers { \n \
+      name: "loss" \n \
+      type: SOFTMAX_LOSS \n \
+      bottom: "' + bottom  + '"\n \
+      bottom: "label" \n \
+      top: "loss" \n \
+    }'
+    return scoringStr

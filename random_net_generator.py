@@ -5,6 +5,14 @@ import random_net_defs #generate prototxt strings
 from pprint import pprint
 #Forrest's random CNN generator
 
+'''
+#TODO: add flags:
+-deploy = 0 or 1
+-seed 
+-numLayers #(number of random layers)
+
+'''
+
 #TODO: find a relatively elegant way to jam this data into a prototxt.
 class RandomDNN:
 
@@ -80,8 +88,8 @@ class RandomDNN:
 #TODO: move this inside the RandomDNN class?
 def gen_DNN():
     net = RandomDNN()
-    #data_layer_str = random_net_defs.dataLayerStr_deploy(256, 3, 227, 227)
-    data_layer_str = random_net_defs.dataLayerStr_trainval('LMDB', '/path/to/train_lmdb', 'LMDB', '/path/to/test_lmdb', 256, 50, 227, 'examples/imagenet/ilsvrc12_train_lmdb') 
+    data_layer_str = random_net_defs.dataLayerStr_deploy(256, 3, 227, 227)
+    #data_layer_str = random_net_defs.dataLayerStr_trainval('LMDB', '/path/to/train_lmdb', 'LMDB', '/path/to/test_lmdb', 256, 50, 227, 'examples/imagenet/ilsvrc12_train_lmdb') 
     print data_layer_str
 
     prev_layer_type='data'
@@ -101,6 +109,18 @@ def gen_DNN():
         prev_layer_name = curr_layer_dict['name']
         prev_layer_type = curr_layer_type
 
+    #boilerplate fully-connected (fast to compute, can't hurt.)
+    print random_net_defs.fcLayerStr('fc6', prev_layer_name, 'fc6', 4096)
+    print random_net_defs.reluLayerStr('relu6', 'fc6', 'fc6') #in-place ReLU
+    print random_net_defs.dropoutLayerStr('drop6', 'fc6', 'fc6')
+    print random_net_defs.fcLayerStr('fc7', 'fc6', 'fc7', 4096) 
+    print random_net_defs.reluLayerStr('relu7', 'fc7', 'fc7') 
+    print random_net_defs.dropoutLayerStr('drop7', 'fc7', 'fc7')
+    print random_net_defs.fcLayerStr('fc8', 'fc7', 'fc8', 1000)
+
+
+    #boilerplate scoring (use only if trainval)
+    #print random_net_defs.scoringTrainvalStr('fc8')
 
 if __name__ == "__main__":
     #TODO: make a class out of this.
