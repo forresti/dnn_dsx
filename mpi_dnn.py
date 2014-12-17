@@ -13,35 +13,49 @@ aprun -n 100 -d 16 python ./mpi_dnn.py #large-scale ... 100 processes, 100 nodes
 #poor man's enum (without installing enum library)
 class tags:
     # TODO: perhaps add a tag for 'CAFFE_FAILED' or something like that (for master to send to worker)
-    READY=0
-    DATA=1
-    DONE=2
+    READY=100 #worker is ready
+    DATA=200 #master has new homework for a worker
+    DONE=300 #job queue is complete 
 
 MASTER=0 #master is rank 0
 
 #master/slave scheduler for Caffe training
-# (for now, at least,) you need to Ctrl+C this when done; master process isn't smart enough to exit.
+# TODO: extend this so that workers can iterate over multiple jobs.
 def scheduler(caffe_job_list):
     comm = MPI.COMM_WORLD
     print "Hello! I'm rank %d from %d running in total..." % (comm.rank, comm.size)
-
     rank = comm.rank
-    '''
-    if rank > 0: #slave
-    
+    num_workers = comm.size-1
+  
+    if rank > 0: #worker
         #while True:
-        
-        comm.send(obj={}, MASTER, tags.DATA) 
+        comm.send(obj={}, dest=MASTER, tag=tags.READY)
 
-        #comm.recv(...)
+        status = MPI.Status() 
+        jobinfo = comm.recv(source=MASTER, tag=MPI.ANY_TAG, status=status) #TODO: check the tag (DATA or DONE) 
+        print "I'm rank %d"%rank, "my next task is: ", jobinfo 
 
     elif rank == 0: #master
-        #while True: #keeps printing the same thing over and over. why doesn't it block?
-        for i in xrange(0,10):
-            status = MPI.Status() 
+        #while True: #if we Ctrl+C this, future MPI jobs seem to hang. (why?)
+        #TODO: perhaps iterate over length of Caffe job list
+
+        for i in xrange(0, comm.size-1): 
+            status = MPI.Status()
+ 
             comm.recv(obj=None, source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status) #blocking receive
-            print "in master: got message from rank=%d, tag=%s" %(status.Get_source(), status.Get_tag())
-    '''
+            workerID = status.Get_source()
+            assert status.Get_tag() == tags.READY #worker only contacts master when it's ready for more work.
+            print "in master: got message from rank=%d, tag=%s" %(workerID, status.Get_tag())
+
+            comm.send(obj={'caffe_job_id':caffe_job_list[i]}, dest=workerID, tag=tags.DATA)
+
+        '''
+        #simple point-to-point w/o synchronization:
+        for workerID in xrange(1, comm.size):
+            #comm.send(obj={'caffe_job_id':caffe_job_list[workerID]}, dest=workerID, tag=tags.DATA)
+            comm.send(obj={}, dest=workerID, tag=tags.DATA)
+        '''
+
     comm.Barrier()   # wait for everybody to synchronize _here_
 
 def get_work_list():
