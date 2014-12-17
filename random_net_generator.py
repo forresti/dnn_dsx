@@ -24,19 +24,25 @@ class RandomDNN:
         self.min_lrn_dim=3
         self.max_lrn_dim=11
         self.max_layers=20
+        self.haveOneConv=False #enforce that first conv layer has a large-ish stride.
 
     #TODO: add 'group' parameter?
     def convLayer(self, layerIdx, prevLayerStr):
         myName = "layer" + str(layerIdx) + "_conv"
-        kernelsize = choice(xrange(self.min_kernelsize, self.max_kernelsize+1))    
         num_output = choice(xrange(self.min_num_output, self.max_num_output+1))
-        stride = choice(xrange(1, kernelsize+1)) #no point striding beyond the kernelsize, right?
+        if not (self.haveOneConv):
+            kernelsize = choice(xrange(2, 12)) 
+            stride = choice( xrange(4, max(5, kernelsize+1)) ) #stride of at least 4
+        else:
+            kernelsize = choice(xrange(self.min_kernelsize, self.max_kernelsize+1))    
+            stride = choice(xrange(1, kernelsize+1)) #no point striding beyond the kernelsize, right?
         bottom = prevLayerStr
         top = myName
 
         #print myName, ' kernelsize = ', kernelsize, ' num_output = ', num_output, ' stride = ', stride
         retStr = random_net_defs.convLayerStr(myName, bottom, top, num_output, kernelsize, stride) 
         
+        self.haveOneConv=True
         return {'name':myName, 'prototxt':retStr}
 
     def poolLayer(self, layerIdx, prevLayerStr):
@@ -106,7 +112,7 @@ def gen_DNN():
             curr_layer_dict = net.lrnLayer(i, prev_layer_name)
 
         print curr_layer_dict['prototxt']
-        prev_layer_name = curr_layer_dict['name']
+        prev_layer_name = curr_layer_dict['name'] #TODO: only update this for layers that can't be computed in place?
         prev_layer_type = curr_layer_type
 
     #boilerplate fully-connected (fast to compute, can't hurt.)
