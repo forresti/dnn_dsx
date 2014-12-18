@@ -20,8 +20,8 @@ class tags:
 MASTER=0 #master is rank 0
 
 #master/slave scheduler for Caffe training
-# TODO: extend this so that workers can iterate over multiple jobs.
-def scheduler(caffe_job_list):
+# UNFINISHED. use scheduler_static() for now.
+def scheduler_dynamic(caffe_job_list):
     comm = MPI.COMM_WORLD
     print "Hello! I'm rank %d from %d running in total..." % (comm.rank, comm.size)
     rank = comm.rank
@@ -58,11 +58,36 @@ def scheduler(caffe_job_list):
 
     comm.Barrier()   # wait for everybody to synchronize _here_
 
+#each MPI rank gets exactly one task. 
+def scheduler_static(caffe_job_list):
+    comm = MPI.COMM_WORLD
+    print "Hello! I'm rank %d from %d running in total..." % (comm.rank, comm.size)
+    rank = comm.rank
+    num_workers = comm.size-1
+  
+    if rank > 0: #worker
+        status = MPI.Status() 
+        jobinfo = comm.recv(source=MASTER, tag=MPI.ANY_TAG, status=status) 
+        print "I'm rank %d"%rank, "my next task is: ", jobinfo 
+
+        #TODO: print when I'm done with the task.
+
+    elif rank == 0: #master
+        num_jobs = min(comm.size, len(caffe_job_list)) #1 job per node... and it's ok if some nodes are idle.
+
+        #simple point-to-point w/o synchronization (possibly slow, but we send a total of 1 msg per worker EVER.):
+        for workerID in xrange(1, num_jobs):
+            comm.send(obj={'caffe_job_id':caffe_job_list[workerID]}, dest=workerID, tag=tags.DATA)
+
+    comm.Barrier()   # wait for everybody to synchronize _here_
+
+
 def get_work_list():
     caffe_job_list = [1,2,3,4] #TODO: read this from directory structure
     return caffe_job_list
 
 if __name__ == "__main__":
     caffe_job_list = get_work_list()
-    scheduler(caffe_job_list)
+    scheduler_static(caffe_job_list)
+    #scheduler_dynamic(caffe_job_list)
 
