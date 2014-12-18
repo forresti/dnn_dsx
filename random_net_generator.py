@@ -3,6 +3,7 @@ from random import seed
 from random import choice
 import random_net_defs #generate prototxt strings
 from pprint import pprint
+from optparse import OptionParser
 #Forrest's random CNN generator
 
 '''
@@ -25,7 +26,9 @@ class RandomDNN:
         self.max_lrn_dim=11
         self.max_layers=20
         self.haveOneConv=False #enforce that first conv layer has a large-ish stride.
+        self.downsampleTo = 227  #keep this below 227 (input img height = width = 227)
 
+    #TODO: add a 'prevLayerTotalDownsampling' factor
     #TODO: add 'group' parameter?
     def convLayer(self, layerIdx, prevLayerStr):
         myName = "layer" + str(layerIdx) + "_conv"
@@ -40,10 +43,14 @@ class RandomDNN:
         top = myName
 
         #print myName, ' kernelsize = ', kernelsize, ' num_output = ', num_output, ' stride = ', stride
-        retStr = random_net_defs.convLayerStr(myName, bottom, top, num_output, kernelsize, stride) 
-        
+        retStr = random_net_defs.convLayerStr(myName, bottom, top, num_output, kernelsize, stride)         
         self.haveOneConv=True
-        return {'name':myName, 'prototxt':retStr}
+
+        #outputWidth = (inputWidth - filterSize + 1)/stride
+        newDownsampleTo = (self.downsampleTo - kernelsize + 1)/stride #integer math
+        self.downsampleTo = newDownsampleTo
+
+        return {'name':myName, 'prototxt':retStr, 'downsampleTo':newDownsampleTo}
 
     def poolLayer(self, layerIdx, prevLayerStr):
         myName = "layer" + str(layerIdx) + "_pool"
@@ -55,8 +62,12 @@ class RandomDNN:
 
         #print myName, ' kernelsize = ', kernelsize, ' stride = ', stride, ' poolType = ', poolType
         retStr = random_net_defs.poolLayerStr(myName, bottom, top, kernelsize, stride, poolType)
-        
-        return {'name':myName, 'prototxt':retStr}
+ 
+        #outputWidth = (inputWidth - filterSize + 1)/stride
+        newDownsampleTo = (self.downsampleTo - kernelsize + 1)/stride #integer math
+        self.downsampleTo = newDownsampleTo
+
+        return {'name':myName, 'prototxt':retStr, 'downsampleTo':newDownsampleTo}
 
 
     def reluLayer(self, layerIdx, prevLayerStr):
@@ -92,10 +103,16 @@ class RandomDNN:
         #TODO: perhaps avoid 2 layers of the same type in a row.
 
 #TODO: move this inside the RandomDNN class?
-def gen_DNN():
+#@param phase = trainval or deploy
+def gen_DNN(phase):
     net = RandomDNN()
-    data_layer_str = random_net_defs.dataLayerStr_deploy(256, 3, 227, 227)
-    #data_layer_str = random_net_defs.dataLayerStr_trainval('LMDB', '/path/to/train_lmdb', 'LMDB', '/path/to/test_lmdb', 256, 50, 227, 'examples/imagenet/ilsvrc12_train_lmdb') 
+
+    if phase == 'deploy':
+        data_layer_str = random_net_defs.dataLayerStr_deploy(256, 3, 227, 227)
+    elif phase == 'trainval':
+        data_layer_str = random_net_defs.dataLayerStr_trainval('LMDB', '/path/to/train_lmdb', 'LMDB', '/path/to/test_lmdb', 256, 50, 227, 'examples/imagenet/ilsvrc12_train_lmdb') 
+    else:
+        print "Warning: didn't generate data_layer. phase must be 'deploy' or 'trainval'"
     print data_layer_str
 
     prev_layer_type='data'
@@ -104,8 +121,10 @@ def gen_DNN():
         curr_layer_type = net.chooseNextLayer(prev_layer_type)
         if curr_layer_type == 'conv':
             curr_layer_dict = net.convLayer(i, prev_layer_name)
+            print 'downsampleTo: ', curr_layer_dict['downsampleTo']
         if curr_layer_type == 'pool':
             curr_layer_dict = net.poolLayer(i, prev_layer_name)
+            print 'downsampleTo: ', curr_layer_dict['downsampleTo']
         if curr_layer_type == 'relu':
             curr_layer_dict = net.reluLayer(i, prev_layer_name)
         if curr_layer_type == 'lrn':
@@ -125,26 +144,29 @@ def gen_DNN():
     print random_net_defs.fcLayerStr('fc8', 'fc7', 'fc8', 1000)
 
 
-    #boilerplate scoring (use only if trainval)
-    #print random_net_defs.scoringTrainvalStr('fc8')
+    if phase == 'trainval':
+        #boilerplate scoring (use only if trainval)
+        print random_net_defs.scoringTrainvalStr('fc8')
 
 if __name__ == "__main__":
-    #TODO: make a class out of this.
-    #seed(1)
-    seed(sys.argv[1])
-    #let's find boiler-plate places to put: DROPOUT, ACCURACY, SOFTMAX_LOSS
-    
-    #TODO: consider randomization within a layer, such as selecting MAX or AVG.
 
+    parser = OptionParser()
+    parser.add_option('--seed', '-s', type="int", help="seed for randomization (mandatory)") #TODO: enforce that this is mandatory
+    parser.add_option('--phase', '-p', type="string", help="--phase deploy -> net for timing. --phase trainval -> net w/ train+val layers. DEFAULT: trainval")
+    (options, args) = parser.parse_args()
+    #print 'input flags: ', options
+
+    if options.seed is None:
+        print "ERROR. --seed is a mandatory flag"
+        sys.exit(1)
+
+    if options.phase is None:
+        phase='trainval'
+    else: phase = options.phase
+    assert (phase == 'trainval') or (phase == 'deploy')
+    #print 'phase: ',phase
+
+    seed(options.seed)
     net = RandomDNN()
-    #net.convLayer(1, 'data')
+    gen_DNN(phase)
 
-    gen_DNN()
-
-    '''
-    prev_layer='data'
-    for i in xrange(0, 20):
-        curr_layer = net.chooseNextLayer(prev_layer)
-        prev_layer = curr_layer
-        print prev_layer
-    '''
