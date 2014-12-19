@@ -20,5 +20,5 @@ TODO: make the following settings easy to customize.
 - path to training LMDB
 - path to val/testing LMDB
 - [solver.prototxt...]
-
+- CAFFE_ROOT in time_nets.sh (and probably in mpi_dnn.py)
 

@@ -24,13 +24,12 @@ class RandomDNN:
         self.max_num_output=200
         self.min_lrn_dim=3
         self.max_lrn_dim=11
-        self.max_layers=20
+        #self.max_layers=20
         self.haveOneConv=False #enforce that first conv layer has a large-ish stride.
-        self.downsampleTo = 227  #keep this below 227 (input img height = width = 227)
 
-    #TODO: add a 'prevLayerTotalDownsampling' factor
     #TODO: add 'group' parameter?
-    def convLayer(self, layerIdx, prevLayerStr):
+    #@param input_downsampleTo = width of input from prev layer
+    def convLayer(self, layerIdx, prevLayerStr, input_downsampleTo):
         myName = "layer" + str(layerIdx) + "_conv"
         num_output = choice(xrange(self.min_num_output, self.max_num_output+1))
         if not (self.haveOneConv):
@@ -47,12 +46,12 @@ class RandomDNN:
         self.haveOneConv=True
 
         #outputWidth = (inputWidth - filterSize + 1)/stride
-        newDownsampleTo = (self.downsampleTo - kernelsize + 1)/stride #integer math
-        self.downsampleTo = newDownsampleTo
+        newDownsampleTo = (input_downsampleTo - kernelsize + 1)/stride #integer math
+        input_downsampleTo = newDownsampleTo
 
         return {'name':myName, 'prototxt':retStr, 'downsampleTo':newDownsampleTo}
 
-    def poolLayer(self, layerIdx, prevLayerStr):
+    def poolLayer(self, layerIdx, prevLayerStr, input_downsampleTo):
         myName = "layer" + str(layerIdx) + "_pool"
         kernelsize = choice(xrange(self.min_kernelsize, self.max_kernelsize+1))
         stride = choice(xrange(1, kernelsize+1))
@@ -64,8 +63,8 @@ class RandomDNN:
         retStr = random_net_defs.poolLayerStr(myName, bottom, top, kernelsize, stride, poolType)
  
         #outputWidth = (inputWidth - filterSize + 1)/stride
-        newDownsampleTo = (self.downsampleTo - kernelsize + 1)/stride #integer math
-        self.downsampleTo = newDownsampleTo
+        newDownsampleTo = (input_downsampleTo - kernelsize + 1)/stride #integer math
+        input_downsampleTo = newDownsampleTo
 
         return {'name':myName, 'prototxt':retStr, 'downsampleTo':newDownsampleTo}
 
@@ -115,16 +114,28 @@ def gen_DNN(phase):
         print "Warning: didn't generate data_layer. phase must be 'deploy' or 'trainval'"
     print data_layer_str
 
+    downsampleTo = 227  #keep this below 227 (input img height = width = 227)
+
     prev_layer_type='data'
     prev_layer_name='data_layer'
     for i in xrange(0, 10):
         curr_layer_type = net.chooseNextLayer(prev_layer_type)
         if curr_layer_type == 'conv':
-            curr_layer_dict = net.convLayer(i, prev_layer_name)
-            print 'downsampleTo: ', curr_layer_dict['downsampleTo']
+            tmp_layer_dict = net.convLayer(i, prev_layer_name, downsampleTo)
+            if tmp_layer_dict['downsampleTo'] > 0:
+                curr_layer_dict = tmp_layer_dict
+                downsampleTo = curr_layer_dict['downsampleTo']
+                #print 'downsampleTo: ', curr_layer_dict['downsampleTo']
+            else: #if the new layer would downsample below 1x1, ignore the layer.
+                continue
         if curr_layer_type == 'pool':
-            curr_layer_dict = net.poolLayer(i, prev_layer_name)
-            print 'downsampleTo: ', curr_layer_dict['downsampleTo']
+            tmp_layer_dict = net.poolLayer(i, prev_layer_name, downsampleTo)
+            if tmp_layer_dict['downsampleTo'] > 0:
+                curr_layer_dict = tmp_layer_dict
+                downsampleTo = curr_layer_dict['downsampleTo']
+                #print 'downsampleTo: ', curr_layer_dict['downsampleTo']
+            else:
+                continue
         if curr_layer_type == 'relu':
             curr_layer_dict = net.reluLayer(i, prev_layer_name)
         if curr_layer_type == 'lrn':
@@ -142,7 +153,6 @@ def gen_DNN(phase):
     print random_net_defs.reluLayerStr('relu7', 'fc7', 'fc7') 
     print random_net_defs.dropoutLayerStr('drop7', 'fc7', 'fc7')
     print random_net_defs.fcLayerStr('fc8', 'fc7', 'fc8', 1000)
-
 
     if phase == 'trainval':
         #boilerplate scoring (use only if trainval)
