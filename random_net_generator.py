@@ -106,10 +106,13 @@ class RandomDNN:
 def gen_DNN(phase):
     net = RandomDNN()
 
+    CAFFE_ROOT='/lustre/atlas/scratch/forresti/csc103/dnn_exploration/caffe-bvlc-master'
+    DATA_PATH='/lustre/atlas/scratch/forresti/csc103/dnn_exploration' 
+
     if phase == 'deploy':
         data_layer_str = random_net_defs.dataLayerStr_deploy(256, 3, 227, 227)
     elif phase == 'trainval':
-        data_layer_str = random_net_defs.dataLayerStr_trainval('LMDB', '/path/to/train_lmdb', 'LMDB', '/path/to/test_lmdb', 256, 50, 227, 'examples/imagenet/ilsvrc12_train_lmdb') 
+        data_layer_str = random_net_defs.dataLayerStr_trainval('LMDB', DATA_PATH+'ilsvrc2012_train_256x256_lmdb', 'LMDB', DATA_PATH+'ilsvrc2012_val_256x256_lmdb', 256, 50, 227, CAFFE_ROOT+'data/ilsvrc12/imagenet_mean.binaryproto') 
     else:
         print "Warning: didn't generate data_layer. phase must be 'deploy' or 'trainval'"
     print data_layer_str

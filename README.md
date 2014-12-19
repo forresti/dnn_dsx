@@ -2,13 +2,13 @@
 rough workflow:
 
 1. generate DNNs
-./gen_nets.sh
-    calls random_net_generator.py
-    outputs to [some folder]
+./gen_nets.sh 
+    calls random_net_generator.py and solver_generator.py
+    outputs to ./nets/$seed
 
 2. time DNNs
 ./time_net.sh
-    copies nets that are sufficiently fast to [some folder]
+    [TODO] copies nets that are sufficiently fast to [some folder]
 
 3. train DNNs (many concurrent training runs on compute cluster)
 python ./mpi_dnn.py

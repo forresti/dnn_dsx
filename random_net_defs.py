@@ -181,3 +181,28 @@ def scoringTrainvalStr(bottom):
       top: "loss" \n \
     }'
     return scoringStr
+
+
+def solverStr(net_file, snapshot_prefix):
+    solverStr = '\n \
+    net: "' + net_file  + '"\n \
+    test_iter: 1000 \n \
+    test_interval: 1000 \n \
+    base_lr: 0.01 \n \
+    lr_policy: "step" \n \
+    gamma: 0.1 \n \
+    stepsize: 100000 \n \
+    display: 20 \n \
+    max_iter: 450000 \n \
+    momentum: 0.9 \n \
+    weight_decay: 0.0005 \n \
+    snapshot: 10000 \n \
+    snapshot_prefix: "' + snapshot_prefix + '" \n\
+    solver_mode: GPU'
+
+    return solverStr
+
+
+
+
+
