@@ -196,7 +196,7 @@ def solverStr(net_file, snapshot_prefix):
     max_iter: 450000 \n \
     momentum: 0.9 \n \
     weight_decay: 0.0005 \n \
-    snapshot: 10000 \n \
+    snapshot: 5000 \n \
     snapshot_prefix: "' + snapshot_prefix + '" \n\
     solver_mode: GPU'
 

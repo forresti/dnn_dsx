@@ -9,6 +9,9 @@ do
   d=./nets/$i
   echo $d
   now=`date +%a_%Y_%m_%d__%H_%M_%S`
-  #aprun -n 1 -d 16 $CAFFE_ROOT/build/tools/caffe train -solver=$d/solver.prototxt -gpu=0 > $d/train_$now.log 2>&1 &
+  aprun -n 1 -d 16 $CAFFE_ROOT/build/tools/caffe train -solver=$d/solver.prototxt -gpu=0 > $d/train_$now.log 2>&1 &
 done
 
+#example training:
+#$CAFFE_ROOT/build/tools/caffe train -solver=nets/0/solver.prototxt 
+#aprun -n 1 -d 16 $CAFFE_ROOT/build/tools/caffe train -solver=nets/0/solver.prototxt 
