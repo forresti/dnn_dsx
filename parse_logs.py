@@ -1,4 +1,6 @@
-
+from pprint import pprint
+import os
+import time
 #TODO: store results on sqlite3 database
 
 
@@ -21,8 +23,83 @@ def get_forward_time(netID):
     return time_float
 
 
+#get the filename of the latest training log, e.g. "train_Sun_2014_12_21__16_01_39.log"
+def get_latest_log(netID):
+    logdir = './nets/%d' %netID
+    allfiles = os.listdir(logdir)
+
+    files_with_time = []
+
+    for f in allfiles:
+        if not (f.startswith('train_') and f.endswith('.log')):
+            continue
+        timeOnly = f[len('train_'):]
+        timeOnly = timeOnly[:-len('.log')]
+        timeOnly = time.strptime(timeOnly, '%a_%Y_%m_%d__%H_%M_%S')
+        files_with_time.append({'filename':f, 'time':timeOnly})
+
+    files_with_time = sorted(files_with_time, key=lambda f:f['time']) #sort from old to new
+    #pprint(files_with_time)
+    return logdir + '/' + files_with_time[-1]['filename']
+
+#@param log_filename: e.g. './nets/0/train_Sun_2014_12_21__16_01_39.log'
+#@return num iter and accuracy
+def get_current_accuracy(log_filename):
+    '''
+    look latest one of these:
+    I1221 22:31:42.642572 23298 solver.cpp:247] Iteration 34000, Testing net (#0)
+    I1221 22:34:36.420714 23298 solver.cpp:298]     Test net output #0: accuracy = 0.11198
+    '''
+
+    f = open(log_filename)
+    test_results = [] #results for every time we test the net
+
+    line = f.readline()
+    while line:
+        if "Testing net" in line:
+            iter_str = line #...solver.cpp:247] Iteration 34000, Testing net (#0)
+            accuracy_str = f.readline() #...solver.cpp:298]     Test net output #0: accuracy = 0.11198
+
+            iter = iter_str.split("Iteration ")[1].split(',')[0]
+            iter = int(iter)
+            
+            accuracy = accuracy_str.split("Test net output #0: ")[1].split('= ')[1]
+            accuracy = float(accuracy)
+            test_results.append({'accuracy':accuracy, 'iter':iter})
+
+        line = f.readline()
+
+    #pprint(test_results)
+    #test_results is already sorted, since we read the log file in order
+    return test_results[-1]
+    
+
+def quick_test():
+    forward_time = get_forward_time(1)
+    #print forward_time    
+
+    latest_log = get_latest_log(1)
+    #print latest_log
+
+    accuracy_dict = get_current_accuracy('./nets/0/train_Sun_2014_12_21__16_01_39.log')
+
+def run_analytics():
+    for i in xrange(0,150):
+        try:
+            forward_time = get_forward_time(i)
+            latest_log = get_latest_log(i)
+            accuracy_dict = get_current_accuracy(latest_log)
+
+            if accuracy_dict['accuracy'] > 0.2:
+                print ' seed=%d, forward_time = %f ms, accuracy = %f at iter %d'%(i, forward_time, accuracy_dict['accuracy'], accuracy_dict['iter']) 
+
+        except:
+            #print "problem parsing seed=%d results"%i
+            continue
+
 if __name__ == "__main__":
 
-    forward_time = get_forward_time(1)
-    print forward_time    
+
+    #quick_test()
+    run_analytics()
 
