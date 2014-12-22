@@ -4,7 +4,9 @@ CAFFE_ROOT=$MEMBERWORK/csc103/dnn_exploration/caffe-bvlc-master
 
 #TODO: divide by # iterations. (or, switch to Caffe dev branch)
 for d in ./nets/*
+#for((i=0; i<2; i++))
 do
+  d=./nets/$i
   echo $d
   #$CAFFE_ROOT/build/tools/caffe time -model=$n -gpu=0 -iterations 10
   #$CAFFE_ROOT/build/tools/caffe time -model=$d/deploy.prototxt -iterations=10
@@ -23,7 +25,7 @@ grep "Forward pass:" ./nets/*/timing.log
     #    [seed 48: 6579ms] -- no pooling, small conv strides
 
 #time AlexNet:
-aprun -n 1 -d 16  $CAFFE_ROOT/build/tools/caffe time -model=$CAFFE_ROOT/models/bvlc_alexnet/deploy_batch256.prototxt -gpu=0 -iterations=10
+#aprun -n 1 -d 16  $CAFFE_ROOT/build/tools/caffe time -model=$CAFFE_ROOT/models/bvlc_alexnet/deploy_batch256.prototxt -gpu=0 -iterations=10
     #Forward pass: 5774.85 milliseconds. 
     #as with the results above, this is sum of 10 iterations' time. (timing isn't averaged in Caffe-master)
 
