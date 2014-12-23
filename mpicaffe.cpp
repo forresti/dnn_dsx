@@ -1,9 +1,10 @@
 #include <glog/logging.h>
-
 #include <cstring>
 #include <map>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <dirent.h>
 #include "mpi.h"
 #include "caffe/caffe.hpp"
 
@@ -13,8 +14,10 @@ using caffe::Net;
 using caffe::Layer;
 using caffe::shared_ptr;
 using caffe::Timer;
-using caffe::vector;
-
+//using caffe::vector; //what is this? -Forrest
+using std::vector;
+using std::string;
+using std::ifstream;
 
 /*
 running this code:
@@ -101,17 +104,13 @@ int train() {
   }
 
   LOG(INFO) << "Starting Optimization";
-  shared_ptr<caffe::Solver<float> >
-    solver(caffe::GetSolver<float>(solver_param));
+  shared_ptr<caffe::Solver<float> > solver(caffe::GetSolver<float>(solver_param));
 
   if (FLAGS_snapshot.size()) {
     LOG(INFO) << "Resuming from " << FLAGS_snapshot;
     solver->Solve(FLAGS_snapshot);
-  } else if (FLAGS_weights.size()) {
-    LOG(INFO) << "Finetuning from " << FLAGS_weights;
-    solver->net()->CopyTrainedLayersFrom(FLAGS_weights);
-    solver->Solve();
-  } else {
+  } 
+ else {
     solver->Solve();
   }
   LOG(INFO) << "Optimization Done.";
@@ -119,9 +118,26 @@ int train() {
 }
 RegisterBrewFunction(train);
 
+//@param train_list_file = file containing list of dirs to train in
+//       e.g. "./nets/0 \n ./nets/1 ... etc"
+vector<string> get_train_dirs(string train_list_file){
+  vector<string> train_dirs;
+
+  ifstream infile(train_list_file.c_str());  
+  if(!infile.is_open()){
+    LOG(ERROR) << "cannot open train_list: " << train_list_file;
+  }
+  string tmp_str;
+  while(infile >> tmp_str){
+    train_dirs.push_back(tmp_str);
+  } 
+     
+  return train_dirs;
+}
+
 int main(int argc, char** argv) {
 
-  int rank,nproc,nid;
+  int rank,nproc;
   int i;
   MPI_Status status;
 
@@ -130,6 +146,17 @@ int main(int argc, char** argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 
   printf("  Rank: %d Total: %d \n",rank, nproc);
+
+  string train_list("/lustre/atlas/scratch/forresti/csc103/dnn_exploration/dnn_dsx/train_list.txt"); //TODO: take as input arg.
+  //TODO: parse args here?
+
+  vector<string> train_dirs = get_train_dirs(train_list);
+  if(rank < train_dirs.size()){
+    string my_train_dir = train_dirs[rank];
+    printf("  Rank: %d  my_train_dir: %s \n",rank, my_train_dir.c_str());
+
+  }
+  //else, this rank does no work.
   MPI_Finalize();
 
   #if 0
