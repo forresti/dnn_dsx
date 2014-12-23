@@ -42,6 +42,7 @@ DEFINE_string(weights, "",
 DEFINE_int32(iterations, 50,
     "The number of iterations to run.");
 
+#if 0
 // A simple registry for caffe commands.
 typedef int (*BrewFunction)();
 typedef std::map<caffe::string, BrewFunction> BrewMap;
@@ -71,6 +72,7 @@ static BrewFunction GetBrewFunction(const caffe::string& name) {
     return NULL;  // not reachable, just to suppress old compiler warnings.
   }
 }
+#endif
 
 // caffe commands to call by
 //     caffe <command> <args>
@@ -79,7 +81,7 @@ static BrewFunction GetBrewFunction(const caffe::string& name) {
 // RegisterBrewFunction(action);
 
 // Train / Finetune a model.
-int train() {
+int train(string train_dir) {
   CHECK_GT(FLAGS_solver.size(), 0) << "Need a solver definition to train.";
   CHECK(!FLAGS_snapshot.size() || !FLAGS_weights.size())
       << "Give a snapshot to resume training or weights to finetune "
@@ -118,7 +120,7 @@ int train() {
   LOG(INFO) << "Optimization Done.";
   return 0;
 }
-RegisterBrewFunction(train);
+//RegisterBrewFunction(train);
 
 //@param train_list_file = file containing list of dirs to train in
 //       e.g. "./nets/0 \n ./nets/1 ... etc"
@@ -182,10 +184,15 @@ string get_latest_solverstate(string train_dir){
   return newest_file_name;
 }
 
+//thanks: stackoverflow.com/questions/12774207
+inline bool file_exists (const std::string& name) {
+  struct stat buffer;   
+  return (stat (name.c_str(), &buffer) == 0); 
+}
+
 int main(int argc, char** argv) {
 
-  int rank,nproc;
-  int i;
+  int rank, nproc;
   MPI_Status status;
 
   MPI_Init(&argc, &argv);
@@ -202,8 +209,18 @@ int main(int argc, char** argv) {
   if(rank < train_dirs.size()){
     string my_train_dir = dnn_dsx_dir + "/" + train_dirs[rank];
     string solverstate = get_latest_solverstate(my_train_dir);
-    //printf("  Rank: %d  my_train_dir: %s \n",rank, my_train_dir.c_str());
     LOG(ERROR) << "rank:" << rank << ", my_train_dir:" << my_train_dir << ", solverstate:" << solverstate;
+
+    //assumption -- the Caffe solver is located here: my_train_dir/solver.prototxt
+    string solver_path = my_train_dir + "/solver.prototxt";
+    if( file_exists(solver_path) ){
+        //TODO: call train()
+
+    }
+    else{
+      LOG(ERROR) << "rank:" << rank << ", solver not found: " << solver_path;
+    }
+
   }
   //else, this rank does no work.
   MPI_Finalize();
