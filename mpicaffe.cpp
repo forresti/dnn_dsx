@@ -22,8 +22,8 @@ using std::ifstream;
 
 /*
 running this code:
-aprun -n 4 -d 1 ./build/tools/mpicaffe
-aprun -n 4 -d 1 $CAFFE_ROOT/build/tools/mpicaffe
+aprun -n 4 -d 16 ./build/tools/mpicaffe
+aprun -n 4 -d 16 $CAFFE_ROOT/build/tools/mpicaffe
     #TODO: flags.
 
 */
@@ -43,19 +43,21 @@ DEFINE_int32(iterations, 50,
     "The number of iterations to run.");
 
 // Train / Finetune a model.
-//@param solver = /path/to/train_dir/solver.prototxt
+//@param solver_path = /path/to/train_dir/solver.prototxt
 //@param solverstate = /path/to/train_dir/caffe_train_iter_90000.solverstate
-int train(string solver, string solverstate) {
+int train(string solver_path, string solverstate) {
+  #if 0
   CHECK_GT(FLAGS_solver.size(), 0) << "Need a solver definition to train.";
   CHECK(!FLAGS_snapshot.size() || !FLAGS_weights.size())
       << "Give a snapshot to resume training or weights to finetune "
       "but not both.";
-
+  #endif
   caffe::SolverParameter solver_param;
-  caffe::ReadProtoFromTextFileOrDie(FLAGS_solver, &solver_param);
+  caffe::ReadProtoFromTextFileOrDie(solver_path, &solver_param);
 
   // If the gpu flag is not provided, allow the mode and device to be set
   // in the solver prototxt.
+#if 0
   if (FLAGS_gpu < 0
       && solver_param.solver_mode() == caffe::SolverParameter_SolverMode_GPU) {
     FLAGS_gpu = solver_param.device_id();
@@ -70,10 +72,22 @@ int train(string solver, string solverstate) {
     LOG(INFO) << "Use CPU.";
     Caffe::set_mode(Caffe::CPU);
   }
+#endif
+  Caffe::SetDevice(0);
+  Caffe::set_mode(Caffe::GPU);
 
-  LOG(INFO) << "Starting Optimization";
+  LOG(ERROR) << "Starting Optimization"; //note: if I do LOG(ERROR) here, it shows up on MPI console. originally LOG(INFO)
   shared_ptr<caffe::Solver<float> > solver(caffe::GetSolver<float>(solver_param));
 
+  if(!solverstate.empty()){
+    LOG(INFO) << "Resuming from " << solverstate;
+    solver->Solve(solverstate);
+  }
+  else{
+    solver->Solve();
+  }
+
+  #if 0
   if (FLAGS_snapshot.size()) {
     LOG(INFO) << "Resuming from " << FLAGS_snapshot;
     solver->Solve(FLAGS_snapshot);
@@ -81,6 +95,7 @@ int train(string solver, string solverstate) {
  else {
     solver->Solve();
   }
+  #endif
   LOG(INFO) << "Optimization Done.";
   return 0;
 }
@@ -176,8 +191,8 @@ int main(int argc, char** argv) {
     //assumption -- the Caffe solver is located here: my_train_dir/solver.prototxt
     string solver_path = my_train_dir + "/solver.prototxt";
     if( file_exists(solver_path) ){
-        //TODO: call train()
-
+      caffe::GlobalInit(&argc, &argv); 
+      train(solver_path, solverstate);
     }
     else{
       LOG(ERROR) << "rank:" << rank << ", solver not found: " << solver_path;
