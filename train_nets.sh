@@ -10,11 +10,11 @@ do
   #echo $d
   now=`date +%a_%Y_%m_%d__%H_%M_%S`
   #aprun -n 1 -d 16 $CAFFE_ROOT/build/tools/caffe train -solver=$d/solver.prototxt -gpu=0 > $d/train_$now.log 2>&1 &
-  aprun -n 1 -d 16 $CAFFE_ROOT/build/tools/caffe train -solver=$d/solver.prototxt -snapshot=$d/caffe_train_iter_20000.solverstate -gpu=0 > $d/train_$now.log 2>&1 &
-   #if [ -f $d/caffe_train_iter_10000.solverstate ]
-   #then
-   #    echo $d/caffe_train_iter_10000.solverstate
-   #fi
+
+  newestDump=`ls -t $d/*solverstate | head -1` #thx: stackoverflow.com/questions/5885934
+
+  #aprun -n 1 -d 16 $CAFFE_ROOT/build/tools/caffe train -solver=$d/solver.prototxt -gpu=0 > $d/train_$now.log 2>&1 &
+  aprun -n 1 -d 16 $CAFFE_ROOT/build/tools/caffe train -solver=$d/solver.prototxt -snapshot=$newestDump -gpu=0 > $d/train_$now.log 2>&1 &
 done
 
 #example training:
