@@ -5,6 +5,7 @@
 #include <vector>
 #include <fstream>
 #include <dirent.h>
+#include <sys/stat.h>
 #include "mpi.h"
 #include "caffe/caffe.hpp"
 
@@ -22,6 +23,7 @@ using std::ifstream;
 /*
 running this code:
 aprun -n 4 -d 1 ./build/tools/mpicaffe
+aprun -n 4 -d 1 $CAFFE_ROOT/build/tools/mpicaffe
     #TODO: flags.
 
 */
@@ -120,9 +122,9 @@ RegisterBrewFunction(train);
 
 //@param train_list_file = file containing list of dirs to train in
 //       e.g. "./nets/0 \n ./nets/1 ... etc"
+//@return train_dirs = list of directories to train in (one per line in train_list_file)
 vector<string> get_train_dirs(string train_list_file){
   vector<string> train_dirs;
-
   ifstream infile(train_list_file.c_str());  
   if(!infile.is_open()){
     LOG(ERROR) << "cannot open train_list: " << train_list_file;
@@ -131,8 +133,53 @@ vector<string> get_train_dirs(string train_list_file){
   while(infile >> tmp_str){
     train_dirs.push_back(tmp_str);
   } 
-     
   return train_dirs;
+}
+
+//@param train_dir = directory to look for *.solverstate snapshot
+//                  (prefer absolute path. relative path will work if we're in the right directory, though.)
+//@return latest snapshot (e.g. caffe_train_iter_95000.solverstate)
+string get_latest_solverstate(string train_dir){
+
+  //get list of solverstate files in train_dir
+  DIR *dir = opendir(train_dir.c_str());
+  if(!dir){
+    LOG(ERROR) << "failed to open dir: " << train_dir;
+  }
+  vector<string> solverstates;
+  struct dirent *ent = readdir(dir);
+  while(ent){ 
+    string fname = string(ent->d_name);
+    if( fname.find(".solverstate") == string::npos ){ 
+      //this isn't a *.solverstate string
+    }
+    else{
+      fname = train_dir + "/" + fname;
+      solverstates.push_back(fname);
+    }
+    ent = readdir(dir);
+  }
+
+  time_t newest_file_time = 0;
+  string newest_file_name = "";
+
+  //find newest solverstate file
+  for(int i=0; i<solverstates.size(); i++){
+    struct stat stat_buf; //in sys/stat.h
+    string fname = solverstates[i];
+    stat(fname.c_str(), &stat_buf);
+    time_t last_modified = stat_buf.st_mtime;
+    //LOG(ERROR) << fname << " last modified: " << last_modified; 
+
+    if(last_modified > newest_file_time){
+      //found a newer solverstate file
+      newest_file_time = last_modified;
+      newest_file_name = fname;
+    }
+  }
+
+  //LOG(ERROR) << "newest solverstate: " << newest_file_name;
+  return newest_file_name;
 }
 
 int main(int argc, char** argv) {
@@ -147,14 +194,16 @@ int main(int argc, char** argv) {
 
   printf("  Rank: %d Total: %d \n",rank, nproc);
 
-  string train_list("/lustre/atlas/scratch/forresti/csc103/dnn_exploration/dnn_dsx/train_list.txt"); //TODO: take as input arg.
-  //TODO: parse args here?
+  //TODO: take cmd-line args... eventually.
+  string dnn_dsx_dir("/lustre/atlas/scratch/forresti/csc103/dnn_exploration/dnn_dsx/");
+  string train_list = dnn_dsx_dir + "/" +  "train_list.txt";
 
   vector<string> train_dirs = get_train_dirs(train_list);
   if(rank < train_dirs.size()){
-    string my_train_dir = train_dirs[rank];
-    printf("  Rank: %d  my_train_dir: %s \n",rank, my_train_dir.c_str());
-
+    string my_train_dir = dnn_dsx_dir + "/" + train_dirs[rank];
+    string solverstate = get_latest_solverstate(my_train_dir);
+    //printf("  Rank: %d  my_train_dir: %s \n",rank, my_train_dir.c_str());
+    LOG(ERROR) << "rank:" << rank << ", my_train_dir:" << my_train_dir << ", solverstate:" << solverstate;
   }
   //else, this rank does no work.
   MPI_Finalize();
