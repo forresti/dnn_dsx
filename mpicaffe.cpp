@@ -42,46 +42,10 @@ DEFINE_string(weights, "",
 DEFINE_int32(iterations, 50,
     "The number of iterations to run.");
 
-#if 0
-// A simple registry for caffe commands.
-typedef int (*BrewFunction)();
-typedef std::map<caffe::string, BrewFunction> BrewMap;
-BrewMap g_brew_map;
-
-#define RegisterBrewFunction(func) \
-namespace { \
-class __Registerer_##func { \
- public: /* NOLINT */ \
-  __Registerer_##func() { \
-    g_brew_map[#func] = &func; \
-  } \
-}; \
-__Registerer_##func g_registerer_##func; \
-}
-
-static BrewFunction GetBrewFunction(const caffe::string& name) {
-  if (g_brew_map.count(name)) {
-    return g_brew_map[name];
-  } else {
-    LOG(ERROR) << "Available caffe actions:";
-    for (BrewMap::iterator it = g_brew_map.begin();
-         it != g_brew_map.end(); ++it) {
-      LOG(ERROR) << "\t" << it->first;
-    }
-    LOG(FATAL) << "Unknown action: " << name;
-    return NULL;  // not reachable, just to suppress old compiler warnings.
-  }
-}
-#endif
-
-// caffe commands to call by
-//     caffe <command> <args>
-//
-// To add a command, define a function "int command()" and register it with
-// RegisterBrewFunction(action);
-
 // Train / Finetune a model.
-int train(string train_dir) {
+//@param solver = /path/to/train_dir/solver.prototxt
+//@param solverstate = /path/to/train_dir/caffe_train_iter_90000.solverstate
+int train(string solver, string solverstate) {
   CHECK_GT(FLAGS_solver.size(), 0) << "Need a solver definition to train.";
   CHECK(!FLAGS_snapshot.size() || !FLAGS_weights.size())
       << "Give a snapshot to resume training or weights to finetune "
@@ -120,7 +84,6 @@ int train(string train_dir) {
   LOG(INFO) << "Optimization Done.";
   return 0;
 }
-//RegisterBrewFunction(train);
 
 //@param train_list_file = file containing list of dirs to train in
 //       e.g. "./nets/0 \n ./nets/1 ... etc"
@@ -179,7 +142,6 @@ string get_latest_solverstate(string train_dir){
       newest_file_name = fname;
     }
   }
-
   //LOG(ERROR) << "newest solverstate: " << newest_file_name;
   return newest_file_name;
 }
