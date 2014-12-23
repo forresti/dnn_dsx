@@ -46,38 +46,17 @@ DEFINE_int32(iterations, 50,
 //@param solver_path = /path/to/train_dir/solver.prototxt
 //@param solverstate = /path/to/train_dir/caffe_train_iter_90000.solverstate
 int train(string solver_path, string solverstate) {
-  #if 0
-  CHECK_GT(FLAGS_solver.size(), 0) << "Need a solver definition to train.";
-  CHECK(!FLAGS_snapshot.size() || !FLAGS_weights.size())
-      << "Give a snapshot to resume training or weights to finetune "
-      "but not both.";
-  #endif
   caffe::SolverParameter solver_param;
   caffe::ReadProtoFromTextFileOrDie(solver_path, &solver_param);
 
-  // If the gpu flag is not provided, allow the mode and device to be set
-  // in the solver prototxt.
-#if 0
-  if (FLAGS_gpu < 0
-      && solver_param.solver_mode() == caffe::SolverParameter_SolverMode_GPU) {
-    FLAGS_gpu = solver_param.device_id();
-  }
-
-  // Set device id and mode
-  if (FLAGS_gpu >= 0) {
-    LOG(INFO) << "Use GPU with device ID " << FLAGS_gpu;
-    Caffe::SetDevice(FLAGS_gpu);
-    Caffe::set_mode(Caffe::GPU);
-  } else {
-    LOG(INFO) << "Use CPU.";
-    Caffe::set_mode(Caffe::CPU);
-  }
-#endif
   Caffe::SetDevice(0);
   Caffe::set_mode(Caffe::GPU);
 
-  LOG(ERROR) << "Starting Optimization"; //note: if I do LOG(ERROR) here, it shows up on MPI console. originally LOG(INFO)
-  shared_ptr<caffe::Solver<float> > solver(caffe::GetSolver<float>(solver_param));
+  LOG(INFO) << "Starting Optimization"; //note: if I do LOG(ERROR) here, it shows up on MPI console. originally LOG(INFO)
+  //shared_ptr<caffe::Solver<float> > solver(caffe::GetSolver<float>(solver_param)); //HANGS HERE when using MPI 
+  shared_ptr<caffe::Solver<float> > solver; //TEMP STUB
+
+  LOG(INFO) << "Initialized solver";
 
   if(!solverstate.empty()){
     LOG(INFO) << "Resuming from " << solverstate;
@@ -87,15 +66,6 @@ int train(string solver_path, string solverstate) {
     solver->Solve();
   }
 
-  #if 0
-  if (FLAGS_snapshot.size()) {
-    LOG(INFO) << "Resuming from " << FLAGS_snapshot;
-    solver->Solve(FLAGS_snapshot);
-  } 
- else {
-    solver->Solve();
-  }
-  #endif
   LOG(INFO) << "Optimization Done.";
   return 0;
 }
@@ -167,6 +137,23 @@ inline bool file_exists (const std::string& name) {
   return (stat (name.c_str(), &buffer) == 0); 
 }
 
+
+void my_init_logging(string train_dir){
+  //thx: http://www.cplusplus.com/reference/ctime/strftime 
+  char now[200];
+  time_t rawtime;
+  struct tm * timeinfo;
+
+  time(&rawtime);
+  timeinfo = localtime(&rawtime);
+  strftime(now, 200, "%a_%Y_%m_%d__%H_%M_%S", timeinfo);
+  string log_fname = train_dir + "/train_" + string(now) + ".log";
+  LOG(ERROR) << "log_fname: " << log_fname;
+
+  //thx: https://code.google.com/p/google-glog/issues/detail?id=26
+  google::SetLogDestination(google::INFO, log_fname.c_str()); //includes INFO, WARNING, and ERROR.
+}
+
 int main(int argc, char** argv) {
 
   int rank, nproc;
@@ -191,6 +178,7 @@ int main(int argc, char** argv) {
     //assumption -- the Caffe solver is located here: my_train_dir/solver.prototxt
     string solver_path = my_train_dir + "/solver.prototxt";
     if( file_exists(solver_path) ){
+      my_init_logging(my_train_dir);
       caffe::GlobalInit(&argc, &argv); 
       train(solver_path, solverstate);
     }
@@ -202,20 +190,4 @@ int main(int argc, char** argv) {
   //else, this rank does no work.
   MPI_Finalize();
 
-  #if 0
-  // Print output to stderr (while still logging).
-  FLAGS_alsologtostderr = 1;
-  // Usage message.
-  gflags::SetUsageMessage("command line brew\n"
-      "usage: caffe <command> <args>\n\n"
-      "commands:\n"
-      "  train           train or finetune a model");
-  // Run tool or show usage.
-  caffe::GlobalInit(&argc, &argv);
-  if (argc == 2) {
-    return GetBrewFunction(caffe::string(argv[1]))();
-  } else {
-    gflags::ShowUsageWithFlagsRestrict(argv[0], "tools/caffe");
-  }
-  #endif
 }
