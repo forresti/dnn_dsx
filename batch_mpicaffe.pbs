@@ -1,0 +1,13 @@
+#!/bin/bash
+#PBS -A csc103
+###PBS -l walltime=12:00:00
+###PBS -l nodes=313
+#PBS -l walltime=00:10:00
+#PBS -l nodes=4
+#PBS -q debug
+#PBS -l gres=atlas1%atlas2
+
+cd $MEMBERWORK/csc103/dnn_exploration/dnn_dsx
+#./train_nets.sh
+aprun -n 4 -d 16 $CAFFE_ROOT/build/tools/mpicaffe
+
