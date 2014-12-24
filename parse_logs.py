@@ -88,13 +88,13 @@ def run_analytics():
     if update_trainlist:
         tl = open('train_list_.txt', 'w')
 
-    for i in xrange(0,300):
+    for i in xrange(0,275):
         try:
             forward_time = get_forward_time(i)
             latest_log = get_latest_log(i)
             accuracy_dict = get_current_accuracy(latest_log)
 
-            if accuracy_dict['accuracy'] > 0.1:
+            if accuracy_dict['accuracy'] > 0.2:
                 print ' seed=%d, forward_time = %f ms, accuracy = %f at iter %d'%(i, forward_time, accuracy_dict['accuracy'], accuracy_dict['iter'])
 
             #if we're not at 10% accuracy by 50k iterations, prune this net. else, carry on training.
@@ -104,6 +104,10 @@ def run_analytics():
         except:
             #print "problem parsing seed=%d results"%i
             continue
+
+    #throw some fresh nets into the hopper (total of 313 nets)
+    for i in xrange(275, 275+88):
+        tl.write('./nets/' + str(i) + '\n')
 
     if update_trainlist:
         tl.close()

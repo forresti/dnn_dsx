@@ -147,11 +147,13 @@ void my_init_logging(string train_dir){
   time(&rawtime);
   timeinfo = localtime(&rawtime);
   strftime(now, 200, "%a_%Y_%m_%d__%H_%M_%S", timeinfo);
-  string log_fname = train_dir + "/train_" + string(now) + ".log";
+  string log_fname = train_dir + "/train_" + string(now); //+ ".log";
   LOG(ERROR) << "log_fname: " << log_fname;
 
   //thx: https://code.google.com/p/google-glog/issues/detail?id=26
   google::SetLogDestination(google::INFO, log_fname.c_str()); //includes INFO, WARNING, and ERROR.
+  //google::SetLogFilenameExtension(""); //default: append datetime. but, we already include datetime in our log filename.
+  //google::SetLogFilenameExtension(".log"); //is ignored... still names the logs "...log.datetime"
 }
 
 int main(int argc, char** argv) {
