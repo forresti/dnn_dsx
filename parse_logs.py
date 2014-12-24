@@ -3,6 +3,7 @@ import os
 import time
 #TODO: store results on sqlite3 database
 
+update_trainlist = True
 
 #@param netID = random seed for this net (e.g. 3 -> ./nets/3)
 def get_forward_time(netID):
@@ -84,18 +85,28 @@ def quick_test():
     accuracy_dict = get_current_accuracy('./nets/0/train_Sun_2014_12_21__16_01_39.log')
 
 def run_analytics():
-    for i in xrange(0,150):
+    if update_trainlist:
+        tl = open('train_list_.txt', 'w')
+
+    for i in xrange(0,300):
         try:
             forward_time = get_forward_time(i)
             latest_log = get_latest_log(i)
             accuracy_dict = get_current_accuracy(latest_log)
 
-            if accuracy_dict['accuracy'] > 0.2:
-                print ' seed=%d, forward_time = %f ms, accuracy = %f at iter %d'%(i, forward_time, accuracy_dict['accuracy'], accuracy_dict['iter']) 
+            if accuracy_dict['accuracy'] > 0.1:
+                print ' seed=%d, forward_time = %f ms, accuracy = %f at iter %d'%(i, forward_time, accuracy_dict['accuracy'], accuracy_dict['iter'])
+
+            #if we're not at 10% accuracy by 50k iterations, prune this net. else, carry on training.
+            if update_trainlist and (accuracy_dict['accuracy'] > 0.1 or accuracy_dict['iter']<50000): 
+                tl.write('./nets/' + str(i) + '\n')
 
         except:
             #print "problem parsing seed=%d results"%i
             continue
+
+    if update_trainlist:
+        tl.close()
 
 if __name__ == "__main__":
 
