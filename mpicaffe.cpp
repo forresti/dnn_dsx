@@ -52,11 +52,11 @@ int train(string solver_path, string solverstate) {
   Caffe::SetDevice(0);
   Caffe::set_mode(Caffe::GPU);
 
-  LOG(INFO) << "Starting Optimization"; //note: if I do LOG(ERROR) here, it shows up on MPI console. originally LOG(INFO)
-  //shared_ptr<caffe::Solver<float> > solver(caffe::GetSolver<float>(solver_param)); //HANGS HERE when using MPI 
-  shared_ptr<caffe::Solver<float> > solver; //TEMP STUB
+  LOG(INFO) << "Starting Optimization";
 
+  shared_ptr<caffe::Solver<float> > solver(caffe::GetSolver<float>(solver_param)); //original. HANGS HERE when using MPI 
   LOG(INFO) << "Initialized solver";
+  google::FlushLogFiles(google::GLOG_INFO); // good to flush this sometimes... 
 
   if(!solverstate.empty()){
     LOG(INFO) << "Resuming from " << solverstate;
@@ -162,7 +162,6 @@ int main(int argc, char** argv) {
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-
   printf("  Rank: %d Total: %d \n",rank, nproc);
 
   //TODO: take cmd-line args... eventually.
@@ -178,8 +177,11 @@ int main(int argc, char** argv) {
     //assumption -- the Caffe solver is located here: my_train_dir/solver.prototxt
     string solver_path = my_train_dir + "/solver.prototxt";
     if( file_exists(solver_path) ){
+
       my_init_logging(my_train_dir);
-      caffe::GlobalInit(&argc, &argv); 
+      FLAGS_logbufsecs = 0;  //flush logs often (only works if placed BEFORE InitGoogleLogging)
+      caffe::GlobalInit(&argc, &argv);  //calls InitGoogleLogging()
+
       train(solver_path, solverstate);
     }
     else{
