@@ -7,6 +7,12 @@
 #PBS -q debug
 #PBS -l gres=atlas1%atlas2
 
+#this does NOT look at ~/.bashrc
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/ccs/home/forresti/forrest_usr_local/lib
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MEMBERWORK/csc103/dnn_exploration/forrest_usr_local/lib #for batch jobs
+CAFFE_ROOT=$MEMBERWORK/csc103/dnn_exploration/caffe-bvlc-master
+
+
 cd $MEMBERWORK/csc103/dnn_exploration/dnn_dsx
 #./train_nets.sh
 aprun -n 4 -d 16 $CAFFE_ROOT/build/tools/mpicaffe
