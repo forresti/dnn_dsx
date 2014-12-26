@@ -68,6 +68,9 @@ def get_current_accuracy(log_filename):
             accuracy = float(accuracy)
             test_results.append({'accuracy':accuracy, 'iter':iter})
 
+        if "error" in line:
+            return "error"
+
         line = f.readline()
 
     #pprint(test_results)
@@ -94,6 +97,10 @@ def run_analytics():
             latest_log = get_latest_log(i)
             accuracy_dict = get_current_accuracy(latest_log)
 
+            if accuracy_dict is "error":
+                print "error in net: ",str(i)
+                continue
+
             if accuracy_dict['accuracy'] > 0.2:
                 print ' seed=%d, forward_time = %f ms, accuracy = %f at iter %d'%(i, forward_time, accuracy_dict['accuracy'], accuracy_dict['iter'])
 
@@ -106,8 +113,11 @@ def run_analytics():
             continue
 
     #throw some fresh nets into the hopper (total of 313 nets)
-    for i in xrange(275, 275+88):
+    #for i in xrange(275, 275+88):
+    '''
+    for i in xrange(275, 275+150):
         tl.write('./nets/' + str(i) + '\n')
+    '''
 
     if update_trainlist:
         tl.close()

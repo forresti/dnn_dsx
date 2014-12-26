@@ -147,7 +147,7 @@ void my_init_logging(string train_dir){
   time(&rawtime);
   timeinfo = localtime(&rawtime);
   strftime(now, 200, "%a_%Y_%m_%d__%H_%M_%S", timeinfo);
-  string log_fname = train_dir + "/train_" + string(now); //+ ".log";
+  string log_fname = train_dir + "/train_" + string(now) + ".log";
   LOG(ERROR) << "log_fname: " << log_fname;
 
   //thx: https://code.google.com/p/google-glog/issues/detail?id=26

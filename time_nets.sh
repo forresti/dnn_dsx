@@ -3,8 +3,8 @@
 CAFFE_ROOT=$MEMBERWORK/csc103/dnn_exploration/caffe-bvlc-master
 
 #TODO: divide by # iterations. (or, switch to Caffe dev branch)
-for d in ./nets/*
-#for((i=0; i<2; i++))
+#for d in ./nets/*
+for((i=0; i<400; i++))
 do
   d=./nets/$i
   echo $d
@@ -14,6 +14,7 @@ do
 
   #$CAFFE_ROOT/build/tools/caffe time -model=$d/deploy.prototxt -iterations=10 > $d/timing.log 2>&1 
   aprun -n 1 -d 16 $CAFFE_ROOT/build/tools/caffe time -model=$d/deploy.prototxt -iterations=10 -gpu=0 > $d/timing.log 2>&1 
+  aprun -n 1 -d 16 $CAFFE_ROOT/build/tools/caffe time -model=$d/trainval.prototxt -iterations=10 -gpu=0 > $d/timing_trainval.log 2>&1
 
 done
 
