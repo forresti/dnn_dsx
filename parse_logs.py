@@ -32,10 +32,12 @@ def get_latest_log(netID):
     files_with_time = []
 
     for f in allfiles:
-        if not (f.startswith('train_') and f.endswith('.log')):
+        #if not (f.startswith('train_') and f.endswith('.log')):
+        if not (f.startswith('train_') and '.log' in f):
             continue
         timeOnly = f[len('train_'):]
-        timeOnly = timeOnly[:-len('.log')]
+        #timeOnly = timeOnly[:-len('.log')]
+        timeOnly = timeOnly.split('.log')[0]
         timeOnly = time.strptime(timeOnly, '%a_%Y_%m_%d__%H_%M_%S')
         files_with_time.append({'filename':f, 'time':timeOnly})
 
@@ -80,10 +82,10 @@ def get_current_accuracy(log_filename):
 
 def quick_test():
     forward_time = get_forward_time(1)
-    #print forward_time    
+    print forward_time    
 
     latest_log = get_latest_log(1)
-    #print latest_log
+    print latest_log
 
     accuracy_dict = get_current_accuracy('./nets/0/train_Sun_2014_12_21__16_01_39.log')
 
