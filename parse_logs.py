@@ -3,7 +3,7 @@ import os
 import time
 #TODO: store results on sqlite3 database
 
-update_trainlist = True
+update_trainlist = False
 
 #@param netID = random seed for this net (e.g. 3 -> ./nets/3)
 def get_forward_time(netID):
@@ -65,17 +65,18 @@ def get_current_accuracy(log_filename):
 
             iter = iter_str.split("Iteration ")[1].split(',')[0]
             iter = int(iter)
-            
-            accuracy = accuracy_str.split("Test net output #0: ")[1].split('= ')[1]
-            accuracy = float(accuracy)
-            test_results.append({'accuracy':accuracy, 'iter':iter})
+           
+            if("Test net output #0: " in accuracy_str): #is occasionally missing, e.g. if job dies while writing output to disk 
+                accuracy = accuracy_str.split("Test net output #0: ")[1].split('= ')[1]
+                accuracy = float(accuracy)
+                test_results.append({'accuracy':accuracy, 'iter':iter})
 
         if "error" in line:
             return "error"
 
         line = f.readline()
 
-    #pprint(test_results)
+    #print '      test_results: ', test_results
     #test_results is already sorted, since we read the log file in order
     return test_results[-1]
     
@@ -87,20 +88,23 @@ def quick_test():
     latest_log = get_latest_log(1)
     print latest_log
 
-    accuracy_dict = get_current_accuracy('./nets/0/train_Sun_2014_12_21__16_01_39.log')
+    #accuracy_dict = get_current_accuracy('./nets/0/train_Sun_2014_12_21__16_01_39.log')
+    accuracy_dict = get_current_accuracy('./nets/306/train_Sat_2014_12_27__13_06_55.log')
 
 def run_analytics():
     if update_trainlist:
         tl = open('train_list_.txt', 'w')
 
-    for i in xrange(0,275):
+    for i in xrange(0,441):
         try:
             forward_time = get_forward_time(i)
+            #print "    forward time: ", forward_time
             latest_log = get_latest_log(i)
+            #print "    latest_log: ", latest_log
             accuracy_dict = get_current_accuracy(latest_log)
 
             if accuracy_dict is "error":
-                print "error in net: ",str(i)
+                #print "error in net: ",str(i)
                 continue
 
             if accuracy_dict['accuracy'] > 0.2:
