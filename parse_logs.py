@@ -104,16 +104,18 @@ def run_analytics():
             accuracy_dict = get_current_accuracy(latest_log)
 
             if accuracy_dict is "error":
-                #print "error in net: ",str(i)
+                print "error in net: ",str(i)
                 continue
 
-            if accuracy_dict['accuracy'] > 0.2:
+            if accuracy_dict['accuracy'] > 0.2: #and forward_time<1000:
+                #if accuracy_dict['accuracy'] < 0.02 and accuracy_dict['iter']>50000:
                 print ' seed=%d, forward_time = %f ms, accuracy = %f at iter %d'%(i, forward_time, accuracy_dict['accuracy'], accuracy_dict['iter'])
 
             #if we're not at 10% accuracy by 50k iterations, prune this net. else, carry on training.
             if update_trainlist and (accuracy_dict['accuracy'] > 0.1 or accuracy_dict['iter']<50000): 
                 tl.write('./nets/' + str(i) + '\n')
-
+        except KeyboardInterrupt:
+            raise
         except:
             #print "problem parsing seed=%d results"%i
             continue
@@ -128,9 +130,31 @@ def run_analytics():
     if update_trainlist:
         tl.close()
 
+def fast_trainlist():
+    if update_trainlist:
+        tl = open('train_list_fast_.txt', 'w')
+
+    for i in xrange(100, 1000):
+        try:
+            forward_time = get_forward_time(i)
+
+            if forward_time < 1000:
+                print ' seed=%d, forward_time = %f ms' %(i, forward_time)
+                if update_trainlist:
+                    tl.write('./nets/' + str(i) + '\n')
+        except KeyboardInterrupt:
+            raise
+        except:
+            #print "problem parsing seed=%d results"%i
+            continue
+
+    if update_trainlist:
+        tl.close()
+
 if __name__ == "__main__":
 
 
     #quick_test()
-    run_analytics()
+    #run_analytics()
+    fast_trainlist()
 
