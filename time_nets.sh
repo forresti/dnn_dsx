@@ -4,7 +4,7 @@ CAFFE_ROOT=$MEMBERWORK/csc103/dnn_exploration/caffe-bvlc-master
 
 #TODO: divide by # iterations. (or, switch to Caffe dev branch)
 #for d in ./nets/*
-for((i=0; i<400; i++))
+for((i=135; i<1000; i++))
 do
   d=./nets/$i
   echo $d

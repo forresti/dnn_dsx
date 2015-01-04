@@ -3,7 +3,7 @@ import os
 import time
 #TODO: store results on sqlite3 database
 
-update_trainlist = False
+update_trainlist =False
 
 #@param netID = random seed for this net (e.g. 3 -> ./nets/3)
 def get_forward_time(netID):
@@ -95,7 +95,9 @@ def run_analytics():
     if update_trainlist:
         tl = open('train_list_.txt', 'w')
 
-    for i in xrange(0,441):
+    trainResults = []
+
+    for i in xrange(0,1000):
         try:
             forward_time = get_forward_time(i)
             #print "    forward time: ", forward_time
@@ -107,13 +109,17 @@ def run_analytics():
                 print "error in net: ",str(i)
                 continue
 
-            if accuracy_dict['accuracy'] > 0.2: #and forward_time<1000:
+            #if accuracy_dict['accuracy'] > 0.2: #and forward_time<1000:
+            if forward_time<1000:
                 #if accuracy_dict['accuracy'] < 0.02 and accuracy_dict['iter']>50000:
                 print ' seed=%d, forward_time = %f ms, accuracy = %f at iter %d'%(i, forward_time, accuracy_dict['accuracy'], accuracy_dict['iter'])
 
             #if we're not at 10% accuracy by 50k iterations, prune this net. else, carry on training.
             if update_trainlist and (accuracy_dict['accuracy'] > 0.1 or accuracy_dict['iter']<50000): 
                 tl.write('./nets/' + str(i) + '\n')
+
+            outDict = {'seed':i, 'accuracy':accuracy_dict['accuracy'], 'iter':accuracy_dict['iter'], 'forward_time':forward_time} 
+            trainResults.append(outDict)
         except KeyboardInterrupt:
             raise
         except:
@@ -129,6 +135,8 @@ def run_analytics():
 
     if update_trainlist:
         tl.close()
+
+    return trainResults
 
 def fast_trainlist():
     if update_trainlist:
@@ -151,10 +159,27 @@ def fast_trainlist():
     if update_trainlist:
         tl.close()
 
+#@trainResults = output of run_analytics()
+def pareto_optimal(trainResults):
+    trainResults = sorted(trainResults, key=lambda t:t['forward_time'])
+    optimalDict = dict() #optimalDict[runtime] = {net info}
+    for maxtime in xrange(400, 5000, 100):
+        #bestFound = trainResults[0]
+        bestFound = {'seed':-1, 'forward_time':0, 'accuracy':0, 'iter':0}
+        for trainResult in trainResults:
+            if trainResult['forward_time'] > maxtime:
+                break
+            if trainResult['accuracy'] > bestFound['accuracy']:
+                bestFound = trainResult
+
+        optimalDict[maxtime] = bestFound
+        print 'best net under %d ms per 10 batches, seed=%d, forward_time=%f, iter=%d, accuracy=%f' %(maxtime, bestFound['seed'], bestFound['forward_time'], bestFound['iter'], bestFound['accuracy'])
+
+    return optimalDict
+
 if __name__ == "__main__":
-
-
     #quick_test()
-    #run_analytics()
-    fast_trainlist()
+    trainResults = run_analytics()
+    optimalDict = pareto_optimal(trainResults)
+    #fast_trainlist()
 
