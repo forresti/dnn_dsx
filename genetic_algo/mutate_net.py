@@ -1,5 +1,7 @@
 
+#sample usage: python mutate_net.py --model=VGG_F/trainval.prototxt
 #ln -s caffe/python/caffe/proto/caffe_pb2.py ./
+#this file is ONLY for mutating nets. crossover happens elsewhere (TODO: implement crossover.)
 
 import caffe_pb2 # assume we created a protobuf type called "addressbook_pb2.py"
 from google.protobuf import text_format
@@ -9,7 +11,7 @@ from random import choice
 from random import uniform
 from pprint import pprint
 from IPython import embed
-
+from optparse import OptionParser
 
 #@param net = NetParameter (loaded from prototxt file)
 def getLayerByName(net, layerName):
@@ -93,10 +95,25 @@ class NetMutator:
 
 #TODO: make the following into a function that takes path to a net to mutate.
 if __name__ == '__main__':
-    #seed(4) #TODO: take from cmd-line
+    #seed(0) #TODO: take from cmd-line
+
+    parser = OptionParser()
+    parser.add_option('--seed', '-s', type="int", help="OPTIONAL. seed for randomization (default: none)")
+    parser.add_option('--model', type="string", help="REQUIRED. e.g. ...trainval.prototxt. you may want to use the result of crossover for this.")
+    parser.add_option('--model_out', type="string", help="OPTIONAL. where to save the mutated output prototxt (default: ./trainval_mutated.prototxt")
+    (options, args) = parser.parse_args()
+
+    if options.seed is not None:
+        seed(options.seed)
+
+    if options.model is not None:
+        net_file = options.model
+    else:
+        print "ERROR. --model is a mandatory flag"
+        sys.exit(1)
 
     net = caffe_pb2.NetParameter()
-    net_file = "/media/big_disk/installers_old/caffe-bvlc-master/models/bvlc_alexnet/train_val.prototxt"
+    #net_file = "/media/big_disk/installers_old/caffe-bvlc-master/models/bvlc_alexnet/train_val.prototxt"
     net_str = open(net_file).read()
     text_format.Merge(net_str, net) #net = load net from str to protobuf
 
@@ -105,7 +122,11 @@ if __name__ == '__main__':
     #embed()
 
     out_net_file = './trainval_mutated.prototxt'
+    if options.model_out is not None:
+        out_net_file = options.model_out
+
     f = open(out_net_file, 'w')
     f.write(text_format.MessageToString(net))
     f.flush()
     f.close()
+
