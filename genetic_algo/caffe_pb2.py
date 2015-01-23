@@ -1,1 +1,0 @@
-/media/big_disk/installers_old/caffe-bvlc-master/python/caffe/proto/caffe_pb2.py
