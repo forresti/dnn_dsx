@@ -33,12 +33,13 @@ class NetMutator:
         self.ranges['pool']['stride'] = self.ranges['pool']['kernel_size'] 
 
         #roughly 24 hyperparams that we play with in VGG-F. on average, mutate 2 params per net.
-        mutation_prob = 1.0 / 12.0 
+        self.mutation_prob = 1.0 / 12.0 
 
     #@param hp = hyperparam to modify (e.g. 'stride')
     # this updates 'net.' (passed by ref everywhere...)
-    def mutate_layers(self, net, layerName, hp):
+    def mutate_layer(self, net, layerName, hp):
         #TODO
+        L = getLayerByName(net, layerName)
         if L.HasField('pooling_param'):
             param_ = 'pooling_param'
             layerType = 'pool'
@@ -49,12 +50,12 @@ class NetMutator:
             print "ERROR: shouldn't mutate this layer type."
             sys.exit(1)
 
-        hp_old_value = getattr(getattr(getLayerByName(net, layerName), param_), hp) #e.g. net.layers[0].convolution_param.stride 
+        hp_old_value = getattr(getattr(L, param_), hp) #e.g. net.layers[0].convolution_param.stride 
 
         if hp != 'stride':
             my_range = [v for v in self.ranges[layerType][hp] if v != hp_old_value] #don't mutate back to prev value. (TODO: test this)
             hp_new_value = choice(my_range)
-            setattr(getattr(getLayerByName(net, layerName), param_), hp) # "net.layers[0].convolution_param.stride = new value"
+            setattr(getattr(L, param_), hp, hp_new_value) # "net.layers[0].convolution_param.stride = hp_new_value"
 
         #else: #hp == 'stride'
         #TODO        
@@ -75,9 +76,9 @@ class NetMutator:
             #print layerType
             for hp in self.ranges[layerType].keys():
                 #print hp
-                do_mutation = uniform(0,1) < mutation_prob #true for [0 to 1/12], else false.
+                do_mutation = uniform(0,1) < self.mutation_prob #true for [0 to 1/12], else false.
                 if do_mutation:
-                    net = self.mutate_layer(net, L.name, hp) #pointer passing?
+                    self.mutate_layer(net, L.name, hp) #pointer passing?
 
 #TODO: make the following into a function that takes path to a net to mutate.
 if __name__ == '__main__':
