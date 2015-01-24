@@ -1,5 +1,6 @@
 
 #sample usage: python mutate_net.py --model=VGG_F/trainval.prototxt
+#              python mutate_net.py --model=VGG_F/deploy.prototxt --model_out=deploy_new.prototxt --seed=8
 #ln -s caffe/python/caffe/proto/caffe_pb2.py ./
 #this file is ONLY for mutating nets. crossover happens elsewhere (TODO: implement crossover.)
 
@@ -93,10 +94,7 @@ class NetMutator:
                 if do_mutation:
                     self.mutate_layer(net, L.name, hp) #pointer passing?
 
-#TODO: make the following into a function that takes path to a net to mutate.
 if __name__ == '__main__':
-    #seed(0) #TODO: take from cmd-line
-
     parser = OptionParser()
     parser.add_option('--seed', '-s', type="int", help="OPTIONAL. seed for randomization (default: none)")
     parser.add_option('--model', type="string", help="REQUIRED. e.g. ...trainval.prototxt. you may want to use the result of crossover for this.")
