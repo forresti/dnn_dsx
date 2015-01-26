@@ -13,6 +13,10 @@ do
 
   echo $newestState
 
+  touch $newestState
+  touch $newestModel
+  touch $d/*prototxt
+
   cp $newestState $output
   cp $newestModel $output
   cp $d/*.log* $output
