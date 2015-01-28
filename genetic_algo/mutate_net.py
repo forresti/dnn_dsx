@@ -87,12 +87,12 @@ class NetMutator:
                 layerType = 'conv'
             else: continue #only mutating conv & pool layers.
 
-            #print layerType
             for hp in self.ranges[layerType].keys():
-                #print hp
                 do_mutation = uniform(0,1) < self.mutation_prob #true for [0 to 1/12], else false.
                 if do_mutation:
-                    self.mutate_layer(net, L.name, hp) #pointer passing?
+                    self.mutate_layer(net, L.name, hp) 
+
+            #TODO: return a list of things that were updated.
 
 if __name__ == '__main__':
     parser = OptionParser()
