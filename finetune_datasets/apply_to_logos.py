@@ -68,8 +68,8 @@ if __name__ == "__main__":
     for d in /nscratch/forresti/dsx_backup/nets_backup_1-9-15_LOGO/*
     do
         echo $d
-        mv $d/solver.prototxt $d/solver_old.prototxt
-        ln -s /nscratch/forresti/dsx_backup/nets_backup_1-9-15_LOGO/solver.prototxt ./solver.prototxt
+        #rm $d/solver.prototxt
+        ln -s /nscratch/forresti/dsx_backup/nets_backup_1-9-15_LOGO/solver.prototxt $d/solver.prototxt
     done
     '''
 
