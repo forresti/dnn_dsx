@@ -1,0 +1,29 @@
+name: "NiN"
+#input: "data"
+#input_dim: 10
+#input_dim: 3
+#input_dim: 227
+#input_dim: 227
+
+#TODO: script to prepend 'deploy data' or 'train+val data'
+#TODO: does std:0.01 vs std:0.05 make any difference for convergence or accuracy?
+
+layer {
+  name: "conv_template", type: "Convolution", bottom: "data", top: "conv1"
+  param {lr_mult: 1, decay_mult: 1}
+  param {lr_mult: 2, decay_mult: 0}
+  convolution_param {
+    num_output: 96, kernel_size: 11, stride: 4
+    weight_filler {type: "gaussian", std: 0.01}
+    bias_filler {type: "constant", value: 0}
+  }
+}
+layer { name: "relu_template", type: "ReLU", bottom: "conv1", top: "conv1" }
+
+layer {
+  name: "pool_template", type: "Pooling", bottom: "cccp2", top: "pool0"
+  pooling_param {pool: MAX, kernel_size: 3, stride: 2}
+}
+
+layer {name: "prob_template", type: "Softmax", bottom: "fc8", top: "prob"}
+

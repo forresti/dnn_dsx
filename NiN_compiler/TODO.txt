@@ -1,0 +1,25 @@
+1. generic NiN-like net to import (data layer, conv1, cccp1, pool1, accuracy layer, etc)
+
+2. add layers like this:
+  - make a copy of conv1 or cccp1 (and their relu layers)
+  - tweak dimensions
+  - keep track of input/output layer names
+
+3. structure...
+  - {'layer name 1', 'type'}, {'layer name 2', 'type'}, ...
+  - e.g. {{'data', 'Data'}, {'conv1', 'Convolution'}, {'relu1', 'ReLU'}}
+  - if relu, don't have own buffer; else have own buffer w/ same name as layer.
+  - load default settings per layer from my base_model.prototxt
+
+4. input format (or at least some hard-coded arrays) to make lists of layer specifications
+
+
+
+***Actually, thought of something easier and probably equally good:***
+- just stuff layer definitions into fewer lines. e.g.:
+layer {
+  name: "conv1", type: "Convolution", bottom: "data", top: "conv1"
+  param {lr_mult: 1,    decay_mult: 1}
+  param {lr_mult: 2, decay_mult: 0}
+  convolution_param {num_output: 96, kernel_size: 11, stride: 4}
+}
