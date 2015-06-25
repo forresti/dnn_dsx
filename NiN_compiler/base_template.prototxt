@@ -25,5 +25,5 @@ layer {
   pooling_param {pool: MAX, kernel_size: 3, stride: 2}
 }
 
-layer {name: "prob_template", type: "Softmax", bottom: "fc8", top: "prob"}
-
+layer {name: "softmax_trainval", type: "SoftmaxWithLoss", bottom: "fc8", bottom:'label', top: "prob"}
+layer {name: "softmax_deploy", type: "Softmax", bottom: "fc8", top: "prob"}

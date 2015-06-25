@@ -32,7 +32,6 @@ class NetCreator:
         net_str = open(net_file).read()
         text_format.Merge(net_str, self.net_inherit) #net = load net from str to protobuf
 
-
     #@param d = dict of customizations (for one layer)
     #@param pb = protobuf to modify (for one layer)
     def mirror_dict_to_protobuf(self, d, pb):
@@ -44,6 +43,23 @@ class NetCreator:
             else: #base case... this gets assigned directly to pb
                 setattr(pb, k, d_elem)
         #no return... pb is updated in-place.
+
+    #TODO: {trainval, deploy}_{prefix, suffix}() ... for data loading & scoring info.
+    #Usage: apply this to an empty NetParameter object
+    def deploy_prefix(self, output_net):
+        input_ = ['data']
+        input_dim = [50, 3, 227, 227]
+        output_net.input.extend(input_)
+        output_net.input_dim.extend(input_dim)  
+
+    def deploy_suffix(self, output_net, curr_input_blob):
+        softmax_layer = caffe_pb2.LayerParameter()
+        softmax_layer.name = "softmax_deploy"
+        softmax_layer.type = "Softmax"
+        softmax_layer.bottom.extend([curr_input_blob])
+        softmax_layer.top.extend(['prob'])
+        output_net.layer.extend([softmax_layer])
+        #output_net is updated in-place
 
     #wire layer inputs/outputs together
     #param d, pb -> see mirror_dict_to_protobuf
@@ -61,8 +77,6 @@ class NetCreator:
         if d['type'] == 'ReLU': #in-place buffer
             b.extend([curr_input_blob])
             t.extend([curr_input_blob])
-            #setattr(pb, 'bottom', [curr_input_blob])
-            #setattr(pb, 'top', curr_input_blob)
 
         else: #out of place buffer
             b.extend([curr_input_blob])
@@ -78,6 +92,7 @@ class NetCreator:
     def create(self, barebones_net_dict):
         output_net = caffe_pb2.NetParameter() 
         curr_input_blob = 'data' #TODO: update this after each non-ReLU layer
+        self.deploy_prefix(output_net) #TODO: if/else trainval/deploy
 
         #for L in self.net_inherit.layer:
         for L in barebones_net_dict:
@@ -93,5 +108,8 @@ class NetCreator:
 
             #3. append modified template to output net
             output_net.layer.extend([my_layer])
+
+        self.deploy_suffix(output_net, curr_input_blob)
+        #TODO: trainval suffix
         return output_net 
 
