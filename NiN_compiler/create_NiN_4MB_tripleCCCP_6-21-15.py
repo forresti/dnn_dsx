@@ -1,4 +1,4 @@
-import caffe_pb2 # assume we created a protobuf type called "addressbook_pb2.py"
+import caffe_pb2
 from google.protobuf import text_format
 import sys
 from pprint import pprint
