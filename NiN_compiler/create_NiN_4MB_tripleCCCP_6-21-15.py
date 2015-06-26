@@ -7,9 +7,9 @@ from optparse import OptionParser
 from collections import OrderedDict
 from copy import deepcopy
 from NetCreator import NetCreator 
+from NetCreator import parse_options
 
-if __name__ == '__main__':
-
+def get_barebones_net():
     barebones_net = OrderedDict() 
     barebones_net['conv1'] = {'type': "Convolution", 'convolution_param':{'num_output':64, 'kernel_size':11, 'stride':4}} 
     barebones_net['relu_conv1'] = {'type': "ReLU"}
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     barebones_net['pool0'] = {'type': "Pooling"} #assume defaults: MAX, ksize=3, stride=2
 
 #conv2 - cccp4
-    barebones_net['conv2'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':5, 'stride':2, 'pad':2}}
+    barebones_net['conv2'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':5, 'stride':1, 'pad':2}}
     barebones_net['relu_conv2'] = {'type': "ReLU"}
 
     barebones_net['cccp4'] = {'type': "Convolution", 'convolution_param':{'num_output':128, 'kernel_size':1, 'stride':1}}
@@ -62,15 +62,22 @@ if __name__ == '__main__':
     barebones_net['cccp10'] = {'type': "Convolution", 'convolution_param':{'num_output':1000, 'kernel_size':1, 'stride':1}}
     barebones_net['relu_cccp10'] = {'type': "ReLU"}
 
-    barebones_net['pool3'] = {'type': "Pooling", 'pooling_param':{'pool':1}} #MAX=0, AVE=1 ... the enum appears as 'AVE' when written to disk.
+    barebones_net['pool3'] = {'type': "Pooling", 'pooling_param':{'pool':1, 'kernel_size':6, 'stride':1}} #MAX=0, AVE=1 ... the enum appears as 'AVE' when written to disk. 
 
     #put 'name' into each dict
     for k in barebones_net.keys():
         barebones_net[k]['name']=k
 
+    return barebones_net
+
+if __name__ == '__main__':
+    barebones_net = get_barebones_net()
+    options = parse_options()
+    phase = options['phase']
+
     netCreator = NetCreator()
-    out_net = netCreator.create(barebones_net)
-    out_net_file = './base_NiN_4MB_tripleCCCP_6-21-15.prototxt'
+    out_net = netCreator.create(barebones_net, phase)
+    out_net_file = './' + phase + '_NiN_4MB_tripleCCCP_6-21-15.prototxt'
     f = open(out_net_file, 'w')
     f.write(text_format.MessageToString(out_net))
     f.flush()

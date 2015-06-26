@@ -10,10 +10,12 @@ from copy import deepcopy
 #Designed for compatibility with current prototxt format as of 6/25/15
 
 #@param net = NetParameter (loaded from prototxt file)
-def getLayerByName(net, layerName):
+def getLayersByName(net, layerName):
+    retList = []
     for L in net.layer:
         if L.name == layerName:
-            return L
+            retList.append(L)
+    return retList
 
 def getLayersByType(net, layerType):
     retList = []
@@ -21,6 +23,21 @@ def getLayersByType(net, layerType):
         if L.type == layerType:
             retList.append(L)
     return retList
+
+def parse_options():
+    parser = OptionParser()
+    parser.add_option('--phase', '-p', type="string", help="OPTIONAL: 'trainval' or 'deploy', default is 'deploy'")
+    (options, args) = parser.parse_args()
+    phase = 'deploy'
+    if options.phase is not None:
+        if options.phase == 'trainval':
+            phase = 'trainval'
+        elif options.phase == 'deploy':
+            phase='deploy'
+        else:
+            print "unknown phase argument. defaulting to 'deploy'"
+
+    return {'phase':phase}
 
 #TODO: put this in NetCreator.py
 # planned usage: "NiN_deep.py defines a custom net... and it uses NetCreator to generate the net prototxt with all the minutae in it"
@@ -52,14 +69,24 @@ class NetCreator:
         output_net.input.extend(input_)
         output_net.input_dim.extend(input_dim)  
 
+    #Usage: apply this to an empty NetParameter object
+    def trainval_prefix(self, output_net):
+        input_layers = getLayersByName(self.net_inherit, 'data') #includes train & test versions
+        output_net.layer.extend(input_layers) 
+
     def deploy_suffix(self, output_net, curr_input_blob):
-        softmax_layer = caffe_pb2.LayerParameter()
-        softmax_layer.name = "softmax_deploy"
-        softmax_layer.type = "Softmax"
+        softmax_layer = getLayersByName(self.net_inherit, 'softmax_deploy')[0]
         softmax_layer.bottom.extend([curr_input_blob])
-        softmax_layer.top.extend(['prob'])
         output_net.layer.extend([softmax_layer])
-        #output_net is updated in-place
+
+    def trainval_suffix(self, output_net, curr_input_blob):
+        softmax_layer = getLayersByName(self.net_inherit, 'softmax_trainval')[0]
+        softmax_layer.bottom.extend([curr_input_blob])
+        
+        accuracy_layer = getLayersByName(self.net_inherit, 'accuracy_trainval')[0]
+        accuracy_layer.bottom.extend([curr_input_blob])
+
+        output_net.layer.extend([softmax_layer, accuracy_layer])
 
     #wire layer inputs/outputs together
     #param d, pb -> see mirror_dict_to_protobuf
@@ -89,12 +116,19 @@ class NetCreator:
     #@param barebones_net_dict = {{'type':'Convolution, 'name':'conv1'}, ...} -- anything not specified will go to default.
     # ASSUME: barebones_net_dict is an OrderedDict w/ layers in topological order
     # ASSUME: barebones_net_dict defines a linked-list topology (can support DAGs later)
-    def create(self, barebones_net_dict):
+    #@param phase = 'trainval' or 'deploy'
+    def create(self, barebones_net_dict, phase):
+        if (phase != 'trainval') and (phase != 'deploy'): #TODO: make sure this test works
+            print "phase must be 'trainval' or 'deploy'"
+            return None
+
         output_net = caffe_pb2.NetParameter() 
         curr_input_blob = 'data' #TODO: update this after each non-ReLU layer
-        self.deploy_prefix(output_net) #TODO: if/else trainval/deploy
+        if phase == 'deploy':
+            self.deploy_prefix(output_net) #TODO: if/else trainval/deploy
+        else:
+            self.trainval_prefix(output_net)
 
-        #for L in self.net_inherit.layer:
         for L in barebones_net_dict:
             layer_type = barebones_net_dict[L]['type'] #e.g. 'Convolution'
             my_template = getLayersByType(self.net_inherit, layer_type)[0] 
@@ -109,7 +143,10 @@ class NetCreator:
             #3. append modified template to output net
             output_net.layer.extend([my_layer])
 
-        self.deploy_suffix(output_net, curr_input_blob)
-        #TODO: trainval suffix
+        if phase == 'deploy':
+            self.deploy_suffix(output_net, curr_input_blob)
+        else:
+            self.trainval_suffix(output_net, curr_input_blob)
+
         return output_net 
 
