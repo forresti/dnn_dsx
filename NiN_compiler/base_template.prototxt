@@ -42,6 +42,7 @@ layer {
 }
 
 #for the following, you extend bottom[] to include the activations to operate on
-layer {name: "accuracy_trainval", type: "Accuracy", bottom: "label", top: "accuracy", include {phase: TEST}}
-layer {name: "softmax_trainval", type: "SoftmaxWithLoss", bottom:'label', top: "prob"}
+# (for trainval, you need bottom = [input, label] ... in that order)
+layer {name: "accuracy_trainval", type: "Accuracy", top: "accuracy", include {phase: TEST}}
+layer {name: "softmax_trainval", type: "SoftmaxWithLoss", top: "prob"}
 layer {name: "softmax_deploy", type: "Softmax", top: "prob"}

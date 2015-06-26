@@ -54,7 +54,7 @@ def get_barebones_net():
     barebones_net['cccp7'] = {'type': "Convolution", 'convolution_param':{'num_output':1024, 'kernel_size':1, 'stride':1}}
     barebones_net['relu_cccp7'] = {'type': "ReLU"}
 
-    barebones_net['cccp8'] = {'type': "Convolution", 'convolution_param':{'num_output':1024, 'kernel_size':1, 'stride':1}}
+    barebones_net['cccp8'] = {'type': "Convolution", 'convolution_param':{'num_output':1000, 'kernel_size':1, 'stride':1}}
     barebones_net['relu_cccp8'] = {'type': "ReLU"}
 
     barebones_net['pool3'] = {'type': "Pooling", 'pooling_param':{'pool':1, 'kernel_size':6, 'stride':1}} #MAX=0, AVE=1 ... the enum appears as 'AVE' when written to disk.

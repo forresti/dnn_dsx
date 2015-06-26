@@ -79,12 +79,13 @@ class NetCreator:
         softmax_layer.bottom.extend([curr_input_blob])
         output_net.layer.extend([softmax_layer])
 
+    #assume 'bottom' is empty in softmax_trainval template
     def trainval_suffix(self, output_net, curr_input_blob):
-        softmax_layer = getLayersByName(self.net_inherit, 'softmax_trainval')[0]
-        softmax_layer.bottom.extend([curr_input_blob])
-        
-        accuracy_layer = getLayersByName(self.net_inherit, 'accuracy_trainval')[0]
-        accuracy_layer.bottom.extend([curr_input_blob])
+        softmax_layer = deepcopy( getLayersByName(self.net_inherit, 'softmax_trainval')[0] )
+        softmax_layer.bottom.extend([curr_input_blob, 'label'])
+
+        accuracy_layer = deepcopy( getLayersByName(self.net_inherit, 'accuracy_trainval')[0] )
+        accuracy_layer.bottom.extend([curr_input_blob, 'label'])
 
         output_net.layer.extend([softmax_layer, accuracy_layer])
 
