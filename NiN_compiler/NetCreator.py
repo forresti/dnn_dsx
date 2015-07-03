@@ -102,7 +102,7 @@ class NetCreator:
             del t[0] 
 
         #update bottom & top
-        if d['type'] == 'ReLU': #in-place buffer
+        if d['type'] == 'ReLU' or d['type'] == 'Dropout': #in-place buffer
             b.extend([curr_input_blob])
             t.extend([curr_input_blob])
 

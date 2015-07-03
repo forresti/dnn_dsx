@@ -21,7 +21,7 @@ def get_barebones_net():
     barebones_net['cccp2'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':1, 'stride':1}} 
     barebones_net['relu_cccp2'] = {'type': "ReLU"}
 
-    barebones_net['pool0'] = {'type': "Pooling"} #assume defaults: MAX, ksize=3, stride=2
+    barebones_net['pool1'] = {'type': "Pooling"} #assume defaults: MAX, ksize=3, stride=2
 
 #conv2 - cccp4
     barebones_net['conv2'] = {'type': "Convolution", 'convolution_param':{'num_output':256, 'kernel_size':5, 'stride':1, 'pad':2}}
@@ -33,7 +33,7 @@ def get_barebones_net():
     barebones_net['cccp4'] = {'type': "Convolution", 'convolution_param':{'num_output':256, 'kernel_size':1, 'stride':1}}
     barebones_net['relu_cccp4'] = {'type': "ReLU"}
 
-    barebones_net['pool1'] = {'type': "Pooling"} #assume defaults: MAX, ksize=3, stride=2
+    barebones_net['pool2'] = {'type': "Pooling"} #assume defaults: MAX, ksize=3, stride=2
 
 #conv3 - cccp6
     barebones_net['conv3'] = {'type': "Convolution", 'convolution_param':{'num_output':384, 'kernel_size':3, 'stride':1, 'pad':1}}
@@ -45,7 +45,8 @@ def get_barebones_net():
     barebones_net['cccp6'] = {'type': "Convolution", 'convolution_param':{'num_output':384, 'kernel_size':1, 'stride':1}}
     barebones_net['relu_cccp6'] = {'type': "ReLU"}
 
-    barebones_net['pool2'] = {'type': "Pooling"} #assume defaults: MAX, ksize=3, stride=2
+    barebones_net['pool3'] = {'type': "Pooling"} #assume defaults: MAX, ksize=3, stride=2
+    barebones_net['drop3'] = {'type': "Dropout"}
 
 #conv4 - cccp8
     barebones_net['conv4'] = {'type': "Convolution", 'convolution_param':{'num_output':1024, 'kernel_size':3, 'stride':1, 'pad':1}}
@@ -57,7 +58,7 @@ def get_barebones_net():
     barebones_net['cccp8'] = {'type': "Convolution", 'convolution_param':{'num_output':1000, 'kernel_size':1, 'stride':1}}
     barebones_net['relu_cccp8'] = {'type': "ReLU"}
 
-    barebones_net['pool3'] = {'type': "Pooling", 'pooling_param':{'pool':1, 'kernel_size':6, 'stride':1}} #MAX=0, AVE=1 ... the enum appears as 'AVE' when written to disk.
+    barebones_net['pool4'] = {'type': "Pooling", 'pooling_param':{'pool':1, 'kernel_size':6, 'stride':1}} #MAX=0, AVE=1 ... the enum appears as 'AVE' when written to disk.
 
     #put 'name' into each dict
     for k in barebones_net.keys():

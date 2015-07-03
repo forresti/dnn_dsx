@@ -41,6 +41,11 @@ layer {
   pooling_param {pool: MAX, kernel_size: 3, stride: 2}
 }
 
+layer {
+  name: "dropout_template", type: "Dropout", bottom: "fc6", top: "fc6"
+  dropout_param {dropout_ratio: 0.5}
+}
+
 #for the following, you extend bottom[] to include the activations to operate on
 # (for trainval, you need bottom = [input, label] ... in that order)
 layer {name: "accuracy_trainval", type: "Accuracy", top: "accuracy", include {phase: TEST}}
