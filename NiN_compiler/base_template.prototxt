@@ -21,7 +21,7 @@ layer {
   include {phase: TEST}
   transform_param {mirror: false, crop_size: 227, mean_value: 104, mean_value: 117, mean_value: 123}
   data_param {source: "/scratch/forresti/ilsvrc2012/ilsvrc2012_val_256x256_lmdb", 
-              batch_size: 50, backend: LMDB}
+              batch_size: 64, backend: LMDB}
 }
 
 layer {
@@ -30,7 +30,7 @@ layer {
   param {lr_mult: 2, decay_mult: 0}
   convolution_param {
     num_output: 96, kernel_size: 11, stride: 4
-    weight_filler {type: "gaussian", std: 0.01}
+    weight_filler {type: "gaussian", std: 0.01, mean:0}
     bias_filler {type: "constant", value: 0}
   }
 }
@@ -44,5 +44,5 @@ layer {
 #for the following, you extend bottom[] to include the activations to operate on
 # (for trainval, you need bottom = [input, label] ... in that order)
 layer {name: "accuracy_trainval", type: "Accuracy", top: "accuracy", include {phase: TEST}}
-layer {name: "softmax_trainval", type: "SoftmaxWithLoss", top: "prob"}
+layer {name: "softmax_trainval", type: "SoftmaxWithLoss", include {phase: TRAIN}}
 layer {name: "softmax_deploy", type: "Softmax", top: "prob"}
