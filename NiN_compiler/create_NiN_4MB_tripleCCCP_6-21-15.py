@@ -11,16 +11,16 @@ from NetCreator import parse_options
 
 def get_barebones_net():
     barebones_net = OrderedDict() 
-    barebones_net['conv1'] = {'type': "Convolution", 'convolution_param':{'num_output':64, 'kernel_size':11, 'stride':4}} 
+    barebones_net['conv1'] = {'type': "Convolution", 'convolution_param':{'num_output':64, 'kernel_size':11, 'stride':4}} #default weight_filler: 0.01 
     barebones_net['relu_conv1'] = {'type': "ReLU"}
 
-    barebones_net['cccp1'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':1, 'stride':1}} 
+    barebones_net['cccp1'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':1, 'stride':1, 'weight_filler':{'std':0.05}}} 
     barebones_net['relu_cccp1'] = {'type': "ReLU"}
 
-    barebones_net['cccp2'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':1, 'stride':1}} 
+    barebones_net['cccp2'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':1, 'stride':1, 'weight_filler':{'std':0.05}}} 
     barebones_net['relu_cccp2'] = {'type': "ReLU"}
 
-    barebones_net['cccp3'] = {'type': "Convolution", 'convolution_param':{'num_output':64, 'kernel_size':1, 'stride':1}}
+    barebones_net['cccp3'] = {'type': "Convolution", 'convolution_param':{'num_output':64, 'kernel_size':1, 'stride':1, 'weight_filler':{'std':0.05}}}
     barebones_net['relu_cccp3'] = {'type': "ReLU"}
 
     barebones_net['pool0'] = {'type': "Pooling"} #assume defaults: MAX, ksize=3, stride=2
@@ -29,13 +29,13 @@ def get_barebones_net():
     barebones_net['conv2'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':5, 'stride':1, 'pad':2}}
     barebones_net['relu_conv2'] = {'type': "ReLU"}
 
-    barebones_net['cccp4'] = {'type': "Convolution", 'convolution_param':{'num_output':128, 'kernel_size':1, 'stride':1}}
+    barebones_net['cccp4'] = {'type': "Convolution", 'convolution_param':{'num_output':128, 'kernel_size':1, 'stride':1, 'weight_filler':{'std':0.05}}}
     barebones_net['relu_cccp4'] = {'type': "ReLU"}
 
-    barebones_net['cccp5'] = {'type': "Convolution", 'convolution_param':{'num_output':128, 'kernel_size':1, 'stride':1}}
+    barebones_net['cccp5'] = {'type': "Convolution", 'convolution_param':{'num_output':128, 'kernel_size':1, 'stride':1, 'weight_filler':{'std':0.05}}}
     barebones_net['relu_cccp5'] = {'type': "ReLU"}
 
-    barebones_net['cccp6'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':1, 'stride':1}}
+    barebones_net['cccp6'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':1, 'stride':1, 'weight_filler':{'std':0.05}}}
     barebones_net['relu_cccp6'] = {'type': "ReLU"}
 
     barebones_net['pool1'] = {'type': "Pooling"} #assume defaults: MAX, ksize=3, stride=2
@@ -44,22 +44,23 @@ def get_barebones_net():
     barebones_net['conv3'] = {'type': "Convolution", 'convolution_param':{'num_output':128, 'kernel_size':3, 'stride':1, 'pad':1}} #TODO: oblong filters.
     barebones_net['relu_conv3'] = {'type': "ReLU"}
 
-    barebones_net['cccp7'] = {'type': "Convolution", 'convolution_param':{'num_output':256, 'kernel_size':1, 'stride':1}}
+    barebones_net['cccp7'] = {'type': "Convolution", 'convolution_param':{'num_output':256, 'kernel_size':1, 'stride':1, 'weight_filler':{'std':0.05}}}
     barebones_net['relu_cccp7'] = {'type': "ReLU"}
 
-    barebones_net['cccp8'] = {'type': "Convolution", 'convolution_param':{'num_output':128, 'kernel_size':1, 'stride':1}}
+    barebones_net['cccp8'] = {'type': "Convolution", 'convolution_param':{'num_output':128, 'kernel_size':1, 'stride':1, 'weight_filler':{'std':0.05}}}
     barebones_net['relu_cccp8'] = {'type': "ReLU"}
 
     barebones_net['pool2'] = {'type': "Pooling"} #assume defaults: MAX, ksize=3, stride=2
+    barebones_net['drop3'] = {'type': "Dropout"}
 
 #conv4 - cccp8
     barebones_net['conv4'] = {'type': "Convolution", 'convolution_param':{'num_output':192, 'kernel_size':3, 'stride':1, 'pad':1}}
     barebones_net['relu_conv4'] = {'type': "ReLU"}
 
-    barebones_net['cccp9'] = {'type': "Convolution", 'convolution_param':{'num_output':384, 'kernel_size':1, 'stride':1}}
+    barebones_net['cccp9'] = {'type': "Convolution", 'convolution_param':{'num_output':384, 'kernel_size':1, 'stride':1, 'weight_filler':{'std':0.05}}}
     barebones_net['relu_cccp9'] = {'type': "ReLU"}
 
-    barebones_net['cccp10'] = {'type': "Convolution", 'convolution_param':{'num_output':1000, 'kernel_size':1, 'stride':1}}
+    barebones_net['cccp10'] = {'type': "Convolution", 'convolution_param':{'num_output':1000, 'kernel_size':1, 'stride':1}} #experimentally w/ NiN, last layer std:0.01 works well, and 0.05 gives wacky loss.
     barebones_net['relu_cccp10'] = {'type': "ReLU"}
 
     barebones_net['pool3'] = {'type': "Pooling", 'pooling_param':{'pool':1, 'kernel_size':6, 'stride':1}} #MAX=0, AVE=1 ... the enum appears as 'AVE' when written to disk. 
