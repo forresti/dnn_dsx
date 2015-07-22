@@ -31,6 +31,7 @@ layer {
   convolution_param {
     num_output: 96, kernel_size: 11, stride: 4
     weight_filler {type: "gaussian", std: 0.01, mean:0}
+    #weight_filler {type: "xavier"}
     bias_filler {type: "constant", value: 0}
   }
 }
