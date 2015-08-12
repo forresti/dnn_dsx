@@ -30,13 +30,28 @@ def rm_old_caffemodels(net_dir):
     rm_list(caffemodels)
     rm_list(snapshots)
 
+#net_dir = directory that contains directories of training runs
+def rm_old_caffemodels_hierarchy(net_dir):
+    for item in os.listdir(net_dir):
+        fullpath=os.path.join(net_dir, item)
+        if os.path.isdir(fullpath):
+            print fullpath
+            try:
+                rm_old_caffemodels(fullpath)
+            except:
+                pass
+
 #sample usage: python rm_old_caffemodels.py nets/vanilla_alexnet_drop0.8/
+#sample usage: python rm_old_caffemodels.py /nscratch/forresti/_caffe_allreduce/nets
 if __name__ == "__main__":
     if len(argv) < 2:
         print "Error: requires one command-line argument: directory of images to pad to square"
         sys.exit()
-
+    
     net_dir = argv[1]
 
-    rm_old_caffemodels(net_dir)
+    #if net_dir directly contains caffemodels...
+    #rm_old_caffemodels(net_dir)
+    rm_old_caffemodels_hierarchy(net_dir)
+    
 
