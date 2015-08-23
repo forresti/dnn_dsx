@@ -1,9 +1,15 @@
+import subprocess
 from pprint import pprint
 import os
 import time
+from caffe.proto import caffe_pb2
+import caffe #need to symlink caffe/python/caffe to this dir.
+import caffe.draw
+from google.protobuf import text_format
 #TODO: store results on sqlite3 database
 
-update_trainlist =False
+update_trainlist = 0
+draw_nets = 1
 
 #@param netID = random seed for this net (e.g. 3 -> ./nets/3)
 def get_forward_time(netDir):
@@ -91,6 +97,20 @@ def quick_test():
     #accuracy_dict = get_current_accuracy('./nets/0/train_Sun_2014_12_21__16_01_39.log')
     accuracy_dict = get_current_accuracy('./nets/306/train_Sat_2014_12_27__13_06_55.log')
 
+#@param baseDir = where to find trainval.prototxt (input)
+#@param baseDir_drawing = where to put output drawing
+#@param netDir = this specific net's directory (should be the net's 'name' or ID)
+def draw_net_wrapper(baseDir, baseDir_drawing, netDir, accuracy_dict):
+    #upgrade to latest caffe protobuf version... 'upgrade_net_proto_text'
+    in_f = baseDir + '/' + netDir + '/trainval_pb2.prototxt'
+    out_f = baseDir_drawing + '/%f_accuracy_%d_iter_netID_%s.jpg' %(accuracy_dict['accuracy'], accuracy_dict['iter'], netDir)
+    #subprocess.call('python ...
+
+    net = caffe_pb2.NetParameter()
+    text_format.Merge(open(in_f).read(), net) 
+    print('Drawing net to %s' % out_f)
+    caffe.draw.draw_net_to_file(net, out_f)
+
 def run_analytics():
     if update_trainlist:
         tl = open('train_list_.txt', 'w')
@@ -123,6 +143,7 @@ def run_analytics():
 
             outDict = {'seed':i, 'accuracy':accuracy_dict['accuracy'], 'iter':accuracy_dict['iter'], 'forward_time':forward_time} 
             trainResults.append(outDict)
+
         except KeyboardInterrupt:
             raise
         except:
@@ -185,6 +206,13 @@ def pareto_optimal(trainResults):
 if __name__ == "__main__":
     #quick_test()
     trainResults = run_analytics()
+
+    baseDir = './nets_custom'
+    baseDir_drawing = './nets_custom_drawings'
+    if draw_nets == True:
+        for t in trainResults:
+            draw_net_wrapper(baseDir, baseDir_drawing, t['seed'], t)
+ 
     #optimalDict = pareto_optimal(trainResults)
     #fast_trainlist()
 
