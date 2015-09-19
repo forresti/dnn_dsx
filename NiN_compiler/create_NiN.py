@@ -12,7 +12,7 @@ from NetCreator import parse_options
 def get_barebones_net():
 
     barebones_net = OrderedDict() 
-    barebones_net['conv1'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':11, 'stride':4}} 
+    barebones_net['conv1'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':11, 'stride':4, 'weight_filler':{'std':0.01}}} 
     barebones_net['relu_conv1'] = {'type': "ReLU"}
 
     barebones_net['cccp1'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':1, 'stride':1}} 
