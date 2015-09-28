@@ -28,7 +28,7 @@ def parse_options():
     parser = OptionParser()
     parser.add_option('--phase', '-p', type="string", help="OPTIONAL: 'trainval' or 'deploy', default is 'deploy'")
     (options, args) = parser.parse_args()
-    phase = 'deploy'
+    phase = 'trainval'
     if options.phase is not None:
         if options.phase == 'trainval':
             phase = 'trainval'
