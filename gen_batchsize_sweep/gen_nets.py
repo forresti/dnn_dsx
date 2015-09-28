@@ -10,7 +10,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from NetCreator import NetCreator 
 from NetCreator import parse_options
-from NiN_barebones import get_barebones_net
+from NiN_conv1_st2_conv2_st2 import get_barebones_net
 
 #round up to nearest 1000
 def roundup(x):

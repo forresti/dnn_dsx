@@ -12,7 +12,7 @@ from NetCreator import parse_options
 def get_barebones_net():
 
     barebones_net = OrderedDict() 
-    barebones_net['conv1'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':11, 'stride':1, 'weight_filler':{'std':0.01}}} 
+    barebones_net['conv1'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':7, 'stride':2, 'weight_filler':{'std':0.01}}} 
     barebones_net['relu_conv1'] = {'type': "ReLU"}
 
     barebones_net['cccp1'] = {'type': "Convolution", 'convolution_param':{'num_output':96, 'kernel_size':1, 'stride':1, 'weight_filler':{'std':0.05}}} 
@@ -36,7 +36,7 @@ def get_barebones_net():
     barebones_net['pool2'] = {'type': "Pooling"} #assume defaults: MAX, ksize=3, stride=2
 
 #conv3 - cccp6
-    barebones_net['conv3'] = {'type': "Convolution", 'convolution_param':{'num_output':384, 'kernel_size':3, 'stride':2, 'pad':1, 'weight_filler':{'std':0.01}}}
+    barebones_net['conv3'] = {'type': "Convolution", 'convolution_param':{'num_output':384, 'kernel_size':3, 'stride':1, 'pad':1, 'weight_filler':{'std':0.01}}}
     barebones_net['relu_conv3'] = {'type': "ReLU"}
 
     barebones_net['cccp5'] = {'type': "Convolution", 'convolution_param':{'num_output':384, 'kernel_size':1, 'stride':1, 'weight_filler':{'std':0.05}}}
