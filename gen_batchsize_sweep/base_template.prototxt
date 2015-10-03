@@ -13,7 +13,8 @@ layer {
   name: "data", type: "Data", top: "data", top: "label"
   include {phase: TRAIN}
   transform_param {mirror: true, crop_size: 227, mean_value: 104, mean_value: 117, mean_value: 123}
-  data_param {source: "/storage_ceph/forresti/ilsvrc2012/ilsvrc2012_train_256x256_lmdb",
+  data_param {source: "/lustre/atlas/scratch/forresti/csc103/dnn_exploration/datasets/ilsvrc2012_train_256x256_lmdb",
+              #source: "/storage_ceph/forresti/ilsvrc2012/ilsvrc2012_train_256x256_lmdb",
               #source: "/scratch/forresti/ilsvrc2012/ilsvrc2012_train_256x256_lmdb", 
               batch_size: 256, backend: LMDB}
 }
@@ -21,7 +22,8 @@ layer {
   name: "data", type: "Data", top: "data", top: "label"
   include {phase: TEST}
   transform_param {mirror: false, crop_size: 227, mean_value: 104, mean_value: 117, mean_value: 123}
-  data_param {source: "/storage_ceph/forresti/ilsvrc2012/ilsvrc2012_val_256x256_lmdb"
+  data_param {source: "/lustre/atlas/scratch/forresti/csc103/dnn_exploration/datasets/ilsvrc2012_val_256x256_lmdb",
+              #source: "/storage_ceph/forresti/ilsvrc2012/ilsvrc2012_val_256x256_lmdb"
               #source: "/scratch/forresti/ilsvrc2012/ilsvrc2012_val_256x256_lmdb", 
               batch_size: 64, backend: LMDB}
 }
