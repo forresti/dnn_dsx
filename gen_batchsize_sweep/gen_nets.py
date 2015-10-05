@@ -98,7 +98,8 @@ if __name__ == '__main__':
     phase = options['phase']
 
     num_epochs = 46.9
-    batch_sizes = x=[2**x for x in xrange(5, 12)] #32 to 2048
+    #batch_sizes = x=[2**x for x in xrange(5, 12)] #32 to 2048
+    batch_sizes = x=[2**x for x in xrange(5, 8)] #32 to 128
 
     for LR_mult in [0.5, 1.0, 2.0]:
         for batch_size in batch_sizes:
