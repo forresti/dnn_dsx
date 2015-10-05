@@ -40,8 +40,9 @@ def derive_training_params(batch_size, num_epochs, LR_mult):
     stepsize = roundup(stepsize)
 
     snapshot = (32.0/batch_size) * 4000 #batch=32 -> snapshot=4000. batch=64 -> snapshot=2000.
+    test_interval = (256.0/batch_size) * 1000 #batch=256 -> test_iter=1000
 
-    return {'base_lr':float(base_lr), 'max_iter':int(max_iter), 'stepsize':int(stepsize), 'snapshot':int(snapshot)}
+    return {'base_lr':float(base_lr), 'max_iter':int(max_iter), 'stepsize':int(stepsize), 'snapshot':int(snapshot), 'test_interval':int(test_interval)}
 
 #out_net is passed by ref
 def customize_net(out_net, batch_size):
@@ -64,11 +65,13 @@ def load_solver():
     return solver
 
 #solver is passed by ref
-def customize_solver(solver, max_iter, stepsize, base_lr, snapshot):
+# TODO: make customize_solver take a dict of args
+def customize_solver(solver, max_iter, stepsize, base_lr, snapshot, test_interval):
     solver.max_iter = max_iter
     solver.stepsize = stepsize
     solver.base_lr = base_lr
     solver.snapshot = snapshot
+    solver.test_interval = test_interval
 
 def save_prototxt(protobuf, out_fname):
     f = open(out_fname, 'w')
@@ -81,7 +84,7 @@ def one_DSE_net(phase, batch_size, LR_mult, num_epochs):
 
     #TODO: print "set: 30 epochs, batch=32, 2xLR" ; "got: LR, step, max_iter"
     print '  user selected: num_epochs=%f, batch_size=%d, LR_mult=%f' %(num_epochs, batch_size, LR_mult)
-    print '    got: max_iter=%d, stepsize=%d, base_lr=%f, snapshot=%d' %(p['max_iter'], p['stepsize'], p['base_lr'], p['snapshot'])
+    print '    got: max_iter=%d, stepsize=%d, base_lr=%f, snapshot=%d, test_interval=%d' %(p['max_iter'], p['stepsize'], p['base_lr'], p['snapshot'], p['test_interval'])
 
     out_parent_dir = './nets_batchsize_sweep'
     mkdir_p(out_parent_dir)
@@ -100,7 +103,7 @@ def one_DSE_net(phase, batch_size, LR_mult, num_epochs):
    
     #update solver 
     solver = load_solver() #default solver
-    customize_solver(solver, p['max_iter'], p['stepsize'], p['base_lr'], p['snapshot'])
+    customize_solver(solver, p['max_iter'], p['stepsize'], p['base_lr'], p['snapshot'], p['test_interval'])
     out_solver_file = out_dir + '/solver.prototxt'
     save_prototxt(solver, out_solver_file)
 
