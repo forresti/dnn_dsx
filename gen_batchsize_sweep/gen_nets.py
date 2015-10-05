@@ -10,6 +10,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from NetCreator import NetCreator 
 from NetCreator import parse_options
+from NetCreator import getLayersByName
 from NiN_conv1_st2_conv2_st2 import get_barebones_net
 
 #round up to nearest 1000
@@ -45,6 +46,13 @@ def customize_net(out_net, batch_size):
     #CUSTOMIZE THIS NET FOR PARAM SWEEP.
     if phase == 'trainval':
         out_net.layer[0].data_param.batch_size = batch_size
+
+    #enable globalpooling in pool4. (TODO: move this to NetCreator...)
+    pool4=getLayersByName(out_net, 'pool4')[0]
+    p=pool4.pooling_param
+    p.ClearField('stride')
+    p.ClearField('kernel_size')
+    p.global_pooling=1
 
 def load_solver():
     solver_file = 'base_solver.prototxt'
