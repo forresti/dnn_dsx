@@ -39,7 +39,9 @@ def derive_training_params(batch_size, num_epochs, LR_mult):
     stepsize = max_iter * (10.0 / 22.0) 
     stepsize = roundup(stepsize)
 
-    return {'base_lr':float(base_lr), 'max_iter':int(max_iter), 'stepsize':int(stepsize)}
+    snapshot = (32.0/batch_size) * 4000 #batch=32 -> snapshot=4000. batch=64 -> snapshot=2000.
+
+    return {'base_lr':float(base_lr), 'max_iter':int(max_iter), 'stepsize':int(stepsize), 'snapshot':int(snapshot)}
 
 #out_net is passed by ref
 def customize_net(out_net, batch_size):
@@ -62,10 +64,11 @@ def load_solver():
     return solver
 
 #solver is passed by ref
-def customize_solver(solver, max_iter, stepsize, base_lr):
+def customize_solver(solver, max_iter, stepsize, base_lr, snapshot):
     solver.max_iter = max_iter
     solver.stepsize = stepsize
     solver.base_lr = base_lr
+    solver.snapshot = snapshot
 
 def save_prototxt(protobuf, out_fname):
     f = open(out_fname, 'w')
@@ -78,7 +81,7 @@ def one_DSE_net(phase, batch_size, LR_mult, num_epochs):
 
     #TODO: print "set: 30 epochs, batch=32, 2xLR" ; "got: LR, step, max_iter"
     print '  user selected: num_epochs=%f, batch_size=%d, LR_mult=%f' %(num_epochs, batch_size, LR_mult)
-    print '    got: max_iter=%d, stepsize=%d, base_lr=%f' %(p['max_iter'], p['stepsize'], p['base_lr'])
+    print '    got: max_iter=%d, stepsize=%d, base_lr=%f, snapshot=%d' %(p['max_iter'], p['stepsize'], p['base_lr'], p['snapshot'])
 
     out_parent_dir = './nets_batchsize_sweep'
     mkdir_p(out_parent_dir)
@@ -97,7 +100,7 @@ def one_DSE_net(phase, batch_size, LR_mult, num_epochs):
    
     #update solver 
     solver = load_solver() #default solver
-    customize_solver(solver, p['max_iter'], p['stepsize'], p['base_lr'])
+    customize_solver(solver, p['max_iter'], p['stepsize'], p['base_lr'], p['snapshot'])
     out_solver_file = out_dir + '/solver.prototxt'
     save_prototxt(solver, out_solver_file)
 
