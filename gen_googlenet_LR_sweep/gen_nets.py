@@ -90,8 +90,8 @@ def save_prototxt(protobuf, out_fname):
 def one_DSE_net(LR_mult):
     #p = derive_training_params(batch_size, num_epochs, LR_mult)
     p = dict()
-    p['base_lr'] = 0.32
-    p['n_gpu'] = 128
+    p['base_lr'] = 0.32 * LR_mult
+    p['n_gpu'] = 32
     num_epochs=64
     batch_size=1024
 
@@ -104,7 +104,7 @@ def one_DSE_net(LR_mult):
 
     out_parent_dir = './nets_batchsize_sweep'
     mkdir_p(out_parent_dir)
-    out_dir = out_parent_dir + '/googlenet_epochs%0.1f_batch%04d_LR%0.3fx' %(num_epochs, batch_size, LR_mult)
+    out_dir = out_parent_dir + '/googlenet_epochs%0.1f_batch%04d_LR%0.4fx' %(num_epochs, batch_size, LR_mult)
     mkdir_p(out_dir)
 
     #boilerplate
@@ -147,6 +147,6 @@ if __name__ == '__main__':
             one_DSE_net(phase, batch_size, LR_mult, num_epochs)
     '''
 
-    for LR_mult in [0.125, 0.25, 0.5, 1.0]:
+    for LR_mult in [0.0625, 0.125, 0.25, 0.5, 1.0]:
         one_DSE_net(LR_mult)
 
