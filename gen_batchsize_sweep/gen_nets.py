@@ -39,11 +39,11 @@ def derive_training_params(batch_size, num_epochs, LR_mult):
     stepsize = max_iter * (10.0 / 22.0) 
     stepsize = roundup(stepsize)
 
-    snapshot = (32.0/batch_size) * 4000 #batch=32 -> snapshot=4000. batch=64 -> snapshot=2000.
-    test_interval = (256.0/batch_size) * 1000 #batch=256 -> test_iter=1000
-    display = (256.0/batch_size) * 20 #don't print too often...
+    n_gpu = math.ceil(batch_size/64.0) #number of GPUs to use for training... batch=128 -> 2 gpu. batch=256 -> 4 GPUs.
+    snapshot = (32.0/batch_size) * 4000 * n_gpu #batch=32 -> snapshot=4000. batch=64 -> snapshot=2000. and, snapshot less often if we have more GPUs.
+    test_interval = (256.0/batch_size) * 1000 * n_gpu #batch=256 -> test_iter=1000. and, test less often if we have more GPUs.
+    display = max( 20, (256.0/batch_size) * 20) #don't print too often...
 
-    n_gpu = math.ceil(batch_size/128.0) #number of GPUs to use for training... batch=128 -> 1 gpu. batch=256 -> 2 GPUs.
 
     return {'base_lr':float(base_lr), 'max_iter':int(max_iter), 'stepsize':int(stepsize), 'snapshot':int(snapshot), 'test_interval':int(test_interval), 'n_gpu':int(n_gpu), 'display':int(display)}
 
