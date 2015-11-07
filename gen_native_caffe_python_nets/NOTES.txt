@@ -1,0 +1,7 @@
+
+n.conv1 = L.Convolution(...)
+Can I have names with slashes in them? 
+
+#this seems to work:
+n.tops['test/layer']=L.SoftmaxWithLoss(n.ip1, n.label)
+
