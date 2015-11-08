@@ -1,5 +1,3 @@
-import unittest
-import tempfile
 #import caffe
 from caffe import Net
 from caffe import NetSpec
