@@ -38,13 +38,13 @@ def FireNet_module(n, bottom, layer_idx):
 
     #note: we're doing n.tops[name] instead of n.name, because we like having slashes in our layer names.
 
-    n.tops[prefix+'conv1x1_1'] = L.Convolution(n.tops[bottom], stride=2, kernel_size=1, num_output=128, weight_filler=dict(type='xavier')) 
+    n.tops[prefix+'conv1x1_1'] = L.Convolution(n.tops[bottom], kernel_size=1, num_output=128, weight_filler=dict(type='xavier')) 
     n.tops[prefix+'relu_conv1x1_1'] = L.ReLU(n.tops[prefix+'conv1x1_1'], in_place=True)
 
     n.tops[prefix+'conv1x1_2'] = L.Convolution(n.tops[prefix+'conv1x1_1'], kernel_size=1, num_output=128, weight_filler=dict(type='xavier'))
     n.tops[prefix+'relu_conv1x1_2'] = L.ReLU(n.tops[prefix+'conv1x1_2'], in_place=True)
 
-    n.tops[prefix+'conv3x3_2'] = L.Convolution(n.tops[prefix+'conv1x1_1'], kernel_size=3, num_output=128, weight_filler=dict(type='xavier'))
+    n.tops[prefix+'conv3x3_2'] = L.Convolution(n.tops[prefix+'conv1x1_1'], kernel_size=3, pad=1, num_output=128, weight_filler=dict(type='xavier'))
     n.tops[prefix+'relu_conv3x3_2'] = L.ReLU(n.tops[prefix+'conv3x3_2'], in_place=True)
 
     n.tops[prefix+'concat'] = L.Concat(n.tops[prefix+'conv1x1_2'], n.tops[prefix+'conv3x3_2']) #is this right?
