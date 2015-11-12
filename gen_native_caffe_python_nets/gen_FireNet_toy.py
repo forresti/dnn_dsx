@@ -32,13 +32,13 @@ def save_prototxt(protobuf, out_fname):
 #TODO: @param number of 1x1_1, 1x1_2, 3x3_2
 def FireNet_module(n, bottom, layer_idx):
 
-    prefix="fire%d/" %layer_idx #e.g. Fire3/conv1x1_1
+    prefix="Fire%d/" %layer_idx #e.g. Fire3/conv1x1_1
 
     #TODO: implement a 'conv_relu' function to reduce lines of code...
 
     #note: we're doing n.tops[name] instead of n.name, because we like having slashes in our layer names.
 
-    n.tops[prefix+'conv1x1_1'] = L.Convolution(n.tops[bottom], stride=2, kernel_size=1, num_output=128, weight_filler=dict(type='xavier')) 
+    n.tops[prefix+'conv1x1_1'] = L.Convolution(n.tops[bottom], kernel_size=1, num_output=128, weight_filler=dict(type='xavier')) 
     n.tops[prefix+'relu_conv1x1_1'] = L.ReLU(n.tops[prefix+'conv1x1_1'], in_place=True)
 
     n.tops[prefix+'conv1x1_2'] = L.Convolution(n.tops[prefix+'conv1x1_1'], kernel_size=1, num_output=128, weight_filler=dict(type='xavier'))
@@ -54,37 +54,40 @@ def FireNet_module(n, bottom, layer_idx):
 
     #TODO: perhaps return the concat layer's name, so the next layer can use it as a 'bottom'
 
-def FireNet_pooling_layer(n, bottom, pool_spec, layer_idx):
-    p = pool_spec
-    next_bottom='pool'+str(layer_idx)
-    n.tops[next_bottom] = L.Pooling(n.tops[bottom], kernel_size=p['kernel_size'], 
-                                                stride=p['stride'], pool=p['pool']) 
-    return next_bottom
-
 def FireNet(batch_size):
-
-    #TODO: take pool_after as an input argument.
-    pool_after = {'conv1':{'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX},
-                  'fire3/concat': {'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX}} 
-
     n = NetSpec()
     n.data, n.label = L.DummyData(shape=[dict(dim=[batch_size, 1, 28, 28]),
                                          dict(dim=[batch_size, 1, 1, 1])],
                                   transform_param=dict(scale=1./255), ntop=2)
-
-    layer_idx=1 #e.g. conv1, fire2, etc. 
     n.conv1 = L.Convolution(n.data, kernel_size=7, num_output=96, stride=2, weight_filler=dict(type='xavier'))
+
+    #TODO: loop over creation of FireNet modules
     curr_bottom = 'conv1'
+    curr_bottom = FireNet_module(n, curr_bottom, 2) #should create Fire2/...
+    curr_bottom = FireNet_module(n, curr_bottom, 3) #should create Fire3/...
 
-    #TODO: increment #filters in here...
-    for layer_idx in xrange(2,4):
-        curr_bottom = FireNet_module(n, curr_bottom, layer_idx) #should create Fire2/...
+    return n.to_proto()
 
-        if curr_bottom in pool_after.keys():
-            curr_bottom = FireNet_pooling_layer(n, curr_bottom, pool_after[curr_bottom], layer_idx) 
-
-    n.loss = L.SoftmaxWithLoss(n.tops[curr_bottom], n.label, include=dict(phase=caffe_pb2.TRAIN)) 
-    n.accuracy = L.Accuracy(n.tops[curr_bottom], n.label, include=dict(phase=caffe_pb2.TEST)) 
+#TODO: parameterize this more.
+def lenet(batch_size):
+    n = NetSpec()
+    n.data, n.label = L.DummyData(shape=[dict(dim=[batch_size, 1, 28, 28]),
+                                         dict(dim=[batch_size, 1, 1, 1])],
+                                  transform_param=dict(scale=1./255), ntop=2)
+    n.conv1 = L.Convolution(n.data, kernel_size=5, num_output=20,
+        weight_filler=dict(type='xavier'))
+    n.pool1 = L.Pooling(n.conv1, kernel_size=2, stride=2, pool=P.Pooling.MAX)
+    n.conv2 = L.Convolution(n.pool1, kernel_size=5, num_output=50,
+        weight_filler=dict(type='xavier'))
+    n.pool2 = L.Pooling(n.conv2, kernel_size=2, stride=2, pool=P.Pooling.MAX)
+    n.ip1 = L.InnerProduct(n.pool2, num_output=500,
+        weight_filler=dict(type='xavier'))
+    n.relu1 = L.ReLU(n.ip1, in_place=True)
+    n.ip2 = L.InnerProduct(n.relu1, num_output=10,
+        weight_filler=dict(type='xavier'))
+    n.loss = L.SoftmaxWithLoss(n.ip2, n.label)
+    n.tops['test/layer']=L.SoftmaxWithLoss(n.ip1, n.label)
+    #embed()
     return n.to_proto()
 
 if __name__ == "__main__":
