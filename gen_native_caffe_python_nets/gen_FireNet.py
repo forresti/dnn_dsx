@@ -7,8 +7,8 @@ from caffe.proto import caffe_pb2
 from IPython import embed
 from google.protobuf import text_format
 
-#phase='trainval'
-phase='deploy'
+phase='trainval'
+#phase='deploy'
 
 '''
 a FireNet module (similar to inception module) is as follows:
@@ -71,6 +71,7 @@ def choose_num_output(firenet_layer_idx):
 
 #@param NetSpec n
 def FireNet_data_layer(n, batch_size):
+    #TODO: set phase...
     test_lmdb='/rscratch/forresti/ILSVRC12/ilsvrc2012_val_256x256_lmdb/'
     n.data, n.label = L.Data(batch_size=batch_size, backend=P.Data.LMDB, source=test_lmdb,
                              transform_param=dict(crop_size=227, mean_value=[104, 117, 123]), ntop=2)
@@ -104,16 +105,33 @@ def FireNet(batch_size):
 
     n.tops['conv_final'] = L.Convolution(n.tops[curr_bottom], kernel_size=1, pad=1, num_output=1000, weight_filler=dict(type='xavier'))   
     n.tops['relu_conv_final'] = L.ReLU(n.tops['conv_final'], in_place=True) 
-    n.tops['pool_final'] = L.Pooling(n.tops[curr_bottom], global_pooling=1, pool=P.Pooling.AVE)
+    n.tops['pool_final'] = L.Pooling(n.tops['conv_final'], global_pooling=1, pool=P.Pooling.AVE)
  
     if phase == 'trainval':
         n.loss = L.SoftmaxWithLoss(n.tops['pool_final'], n.label, include=dict(phase=caffe_pb2.TRAIN))
         n.accuracy = L.Accuracy(n.tops['pool_final'], n.label, include=dict(phase=caffe_pb2.TEST)) 
     return n.to_proto()
 
+#get protobuf containing only a data layer
+def gen_singleton_data_layer(batch_size, phase):
+    #TODO: set phase in protobuf.
+    #TODO: select LMDB based on phase
+    n = NetSpec()
+    test_lmdb='/rscratch/forresti/ILSVRC12/ilsvrc2012_val_256x256_lmdb/'
+    n.data, n.label = L.Data(batch_size=batch_size, backend=P.Data.LMDB, source=test_lmdb,
+                             transform_param=dict(crop_size=227, mean_value=[104, 117, 123]), ntop=2)
+    return n.to_proto()
+
 if __name__ == "__main__":
 
-    net_proto = FireNet(128)
+    batch_size=128
+    net_proto = FireNet(batch_size)
+
+    #TODO: make 'train' in FireNet(), and add 'test' here
+    data_train_proto = gen_singleton_data_layer(batch_size, 'train')
+    data_train_proto.MergeFrom(net_proto)
+    net_proto = data_train_proto
+
     save_prototxt(net_proto, 'FireNet.prototxt')
 
 
