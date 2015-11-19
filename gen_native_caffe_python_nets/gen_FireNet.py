@@ -6,6 +6,7 @@ from caffe import params as P
 from caffe.proto import caffe_pb2
 from IPython import embed
 from google.protobuf import text_format
+import conf_firenet as conf
 
 phase='trainval'
 #phase='deploy'
@@ -71,9 +72,8 @@ def choose_num_output(firenet_layer_idx):
 
 #@param NetSpec n
 def FireNet_data_layer(n, batch_size):
-    #TODO: set phase...
-    test_lmdb='/rscratch/forresti/ILSVRC12/ilsvrc2012_val_256x256_lmdb/'
-    n.data, n.label = L.Data(batch_size=batch_size, backend=P.Data.LMDB, source=test_lmdb,
+    #important: conf.test_lmdb
+    n.data, n.label = L.Data(batch_size=batch_size, backend=P.Data.LMDB, source=conf.test_lmdb, include=dict(phase=caffe_pb2.TEST),
                              transform_param=dict(crop_size=227, mean_value=[104, 117, 123]), ntop=2)
 
 def FireNet(batch_size):
@@ -113,22 +113,20 @@ def FireNet(batch_size):
     return n.to_proto()
 
 #get protobuf containing only a data layer
-def gen_singleton_data_layer(batch_size, phase):
-    #TODO: set phase in protobuf.
-    #TODO: select LMDB based on phase
+def get_train_data_layer(batch_size):
+    #important: conf.train_lmdb
     n = NetSpec()
-    test_lmdb='/rscratch/forresti/ILSVRC12/ilsvrc2012_val_256x256_lmdb/'
-    n.data, n.label = L.Data(batch_size=batch_size, backend=P.Data.LMDB, source=test_lmdb,
+    n.data, n.label = L.Data(batch_size=batch_size, backend=P.Data.LMDB, source=conf.train_lmdb, include=dict(phase=caffe_pb2.TRAIN),
                              transform_param=dict(crop_size=227, mean_value=[104, 117, 123]), ntop=2)
     return n.to_proto()
 
 if __name__ == "__main__":
 
-    batch_size=128
+    batch_size=1024
     net_proto = FireNet(batch_size)
 
-    #TODO: make 'train' in FireNet(), and add 'test' here
-    data_train_proto = gen_singleton_data_layer(batch_size, 'train')
+    #hack to deal with NetSpec's inability to have two layers both named 'data'
+    data_train_proto = get_train_data_layer(batch_size)
     data_train_proto.MergeFrom(net_proto)
     net_proto = data_train_proto
 
