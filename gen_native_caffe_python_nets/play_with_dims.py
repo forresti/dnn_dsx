@@ -54,13 +54,6 @@ if __name__ == "__main__":
 
         prev_chans_out = num_3x3_2+num_1x1_2
 
-        st = base_name + ' '
-        st += '1x1_1: ' + str(num_1x1_1)
-        st += ', 1x1_2: ' + str(num_1x1_2)
-        st += ', 3x3_2: ' + str(num_3x3_2) 
-        #print st
-
-
     total_params_size = compute_params_size(layer_dims) #layer_dims is updated in-place
 
     pprint(s)
