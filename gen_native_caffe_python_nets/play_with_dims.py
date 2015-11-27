@@ -13,22 +13,40 @@ def compute_params_size(layer_dims):
 
 if __name__ == "__main__":
 
-    base_1x1_1 = 128
-    base_1x1_2 = 128 #TODO: vary... these are cheap.
-    base_3x3_2 = 64
+    s = dict() #settings
 
-    incr_add_1x1_1 = 128
-    incr_add_1x1_2 = 128 #TODO: vary... these are cheap.
-    incr_add_3x3_2 = 64
+    #FireNet_default (not including beginning and ending conv layers)
+    s['num_fire_layers']=4
+
+    s['base_1x1_1'] = 128
+    s['base_1x1_2'] = 128 #TODO: vary... these are cheap.
+    s['base_3x3_2'] = 64
+
+    s['incr_add_1x1_1'] = 128
+    s['incr_add_1x1_2'] = 128 #TODO: vary... these are cheap.
+    s['incr_add_3x3_2'] = 64
+
+    #FireNet w/ 10 fire layers
+    '''
+    s['num_fire_layers']=10
+
+    s['base_1x1_1'] = 128
+    s['base_1x1_2'] = 128 #TODO: vary... these are cheap.
+    s['base_3x3_2'] = 64
+
+    s['incr_add_1x1_1'] = 64
+    s['incr_add_1x1_2'] = 64 #TODO: vary... these are cheap.
+    s['incr_add_3x3_2'] = 32
+    '''
 
     layer_dims=dict()
 
     prev_chans_out=3 #rgb
-    for layer_idx in xrange(0, 4):
+    for layer_idx in xrange(0, s['num_fire_layers']):
         base_name = "fire%d/" %layer_idx
-        num_1x1_1 = base_1x1_1 + layer_idx*incr_add_1x1_1
-        num_1x1_2 = base_1x1_2 + layer_idx*incr_add_1x1_2
-        num_3x3_2 = base_3x3_2 + layer_idx*incr_add_3x3_2 
+        num_1x1_1 = s['base_1x1_1'] + layer_idx*s['incr_add_1x1_1']
+        num_1x1_2 = s['base_1x1_2'] + layer_idx*s['incr_add_1x1_2']
+        num_3x3_2 = s['base_3x3_2'] + layer_idx*s['incr_add_3x3_2'] 
 
         layer_dims[base_name+'conv1x1_1'] = {'chans_in':prev_chans_out, 'chans_out':num_1x1_1, 'h':1, 'w':1}
         layer_dims[base_name+'conv1x1_2'] = {'chans_in':num_1x1_1, 'chans_out':num_1x1_2, 'h':1, 'w':1}
@@ -44,6 +62,8 @@ if __name__ == "__main__":
 
 
     total_params_size = compute_params_size(layer_dims) #layer_dims is updated in-place
+
+    pprint(s)
     pprint(layer_dims)
     print 'total params size:', total_params_size
     
