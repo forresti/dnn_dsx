@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     s['base_1x1_1'] = 64
     s['base_1x1_2'] = 256
-    s['base_3x3_2'] = 32
+    s['base_3x3_2'] = 64
 
     s['incr_freq'] = 2 #increase # filters after every 'this many' layers.
     s['incr_add_1x1_1'] = 64

@@ -1,3 +1,5 @@
+from math import floor
+import os
 #import caffe
 from caffe import Net
 from caffe import NetSpec
@@ -21,6 +23,10 @@ a FireNet module (similar to inception module) is as follows:
    concat
 
 '''
+
+def mkdir_p(path):
+    if not os.access(path, os.F_OK):
+        os.mkdir(path)
 
 def save_prototxt(protobuf, out_fname):
     f = open(out_fname, 'w')
@@ -64,10 +70,11 @@ def FireNet_pooling_layer(n, bottom, pool_spec, layer_idx):
     return next_bottom
 
 def choose_num_output(firenet_layer_idx, s):
+    idx=firenet_layer_idx
     firenet_dict = dict()
-    firenet_dict['conv1x1_1_num_output'] = 128 + firenet_layer_idx*128
-    firenet_dict['conv3x3_2_num_output'] = 64 + firenet_layer_idx*64
-    firenet_dict['conv1x1_2_num_output'] = 128 + firenet_layer_idx*128 
+    firenet_dict['conv1x1_1_num_output'] = int(s['base_1x1_1'] + floor(idx/s['incr_freq']) * s['incr_1x1_1'])
+    firenet_dict['conv1x1_2_num_output'] = int(s['base_1x1_2'] + floor(idx/s['incr_freq']) * s['incr_1x1_2'])
+    firenet_dict['conv3x3_2_num_output'] = int(s['base_3x3_2'] + floor(idx/s['incr_freq']) * s['incr_3x3_2'])
     return firenet_dict
 
 #@param NetSpec n
@@ -77,6 +84,8 @@ def FireNet_data_layer(n, batch_size):
                              transform_param=dict(crop_size=227, mean_value=[104, 117, 123]), ntop=2)
 
 def FireNet(batch_size, pool_after, s):
+    print s
+
     n = NetSpec()
     FireNet_data_layer(n, batch_size) #add data layer to the net
 
@@ -88,8 +97,8 @@ def FireNet(batch_size, pool_after, s):
     if curr_bottom in pool_after.keys():
         curr_bottom = FireNet_pooling_layer(n, curr_bottom, pool_after[curr_bottom], layer_idx)
     
-    for layer_idx in xrange(2,6):
-        firenet_dict = choose_num_output(layer_idx-2)
+    for layer_idx in xrange(2,10):
+        firenet_dict = choose_num_output(layer_idx-2, s)
         print firenet_dict
         curr_bottom = FireNet_module(n, curr_bottom, firenet_dict, layer_idx) 
 
@@ -116,12 +125,11 @@ def get_train_data_layer(batch_size):
     return n.to_proto()
 
 
+#default pooling:
+regular_pool = {'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX}
+
 def get_pooling_schemes():
     pool_after = dict()
-
-    #default pooling:
-    regular_pool = {'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX}
-
     pool_after['default'] = {'conv1':regular_pool,
                   'fire3/concat': regular_pool,
                   'fire4/concat': regular_pool} 
@@ -136,23 +144,35 @@ def get_pooling_schemes():
 
     return pool_after
 
+def get_base_incr_schemes():
+    base_incr = []
+    base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':32, 'incr_1x1_1':96, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) #~12MB
+    base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':32, 'incr_1x1_1':64, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) #~9MB
+    base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':64, 'incr_1x1_1':96, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) #~10.5MB
+    base_incr.append({'base_1x1_1':64, 'base_1x1_2':256, 'base_3x3_2':32, 'incr_1x1_1':96, 'incr_1x1_2':256, 'incr_3x3_2':48, 'incr_freq':2}) #~14.5MB
+    return base_incr
 
 if __name__ == "__main__":
-    pool_after = get_pooling_schemes()
     batch_size=1024
 
-    for p in pool_after.keys():
+    pool_after = get_pooling_schemes()
+    #for p in pool_after.keys():
+    p = {'conv1':regular_pool, 'fire4/concat':regular_pool, 'fire8/concat':regular_pool} 
 
-        net_proto = FireNet(batch_size, pool_after[p])
+    base_incr_schemes = get_base_incr_schemes()
+    for s in base_incr_schemes:
+        net_proto = FireNet(batch_size, p, s)
 
         #hack to deal with NetSpec's inability to have two layers both named 'data'
         data_train_proto = get_train_data_layer(batch_size)
         data_train_proto.MergeFrom(net_proto)
         net_proto = data_train_proto
 
-        #TODO: separate directory for each of these.
-        outF = 'FireNet_pool_%s.prototxt' %p #e.g. pool_early
+        out_dir = 'nets/FireNet_8_fireLayers_base_%d_%d_%d_incr_%d_%d_%d_freq_%d' %(s['base_1x1_1'], s['base_1x1_2'], s['base_3x3_2'], 
+                                                                                    s['incr_1x1_1'], s['incr_1x1_2'], s['incr_3x3_2'], s['incr_freq'])
+        mkdir_p(out_dir)
+        #outF = 'FireNet_pool_%s.prototxt' %p #e.g. pool_early
+        outF = out_dir + '/trainval.prototxt' 
         save_prototxt(net_proto, outF)
-
 
 
