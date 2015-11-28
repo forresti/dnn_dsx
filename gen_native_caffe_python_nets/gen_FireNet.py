@@ -63,7 +63,7 @@ def FireNet_pooling_layer(n, bottom, pool_spec, layer_idx):
                                                 stride=p['stride'], pool=p['pool']) 
     return next_bottom
 
-def choose_num_output(firenet_layer_idx):
+def choose_num_output(firenet_layer_idx, s):
     firenet_dict = dict()
     firenet_dict['conv1x1_1_num_output'] = 128 + firenet_layer_idx*128
     firenet_dict['conv3x3_2_num_output'] = 64 + firenet_layer_idx*64
@@ -76,7 +76,7 @@ def FireNet_data_layer(n, batch_size):
     n.data, n.label = L.Data(batch_size=batch_size, backend=P.Data.LMDB, source=conf.test_lmdb, include=dict(phase=caffe_pb2.TEST),
                              transform_param=dict(crop_size=227, mean_value=[104, 117, 123]), ntop=2)
 
-def FireNet(batch_size, pool_after):
+def FireNet(batch_size, pool_after, s):
     n = NetSpec()
     FireNet_data_layer(n, batch_size) #add data layer to the net
 
@@ -120,17 +120,19 @@ def get_pooling_schemes():
     pool_after = dict()
 
     #default pooling:
-    pool_after['default'] = {'conv1':{'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX},
-                  'fire3/concat': {'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX},
-                  'fire4/concat': {'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX}} 
+    regular_pool = {'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX}
 
-    pool_after['early'] = {'conv1':{'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX},
-                  'fire2/concat': {'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX},
-                  'fire3/concat': {'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX}} 
+    pool_after['default'] = {'conv1':regular_pool,
+                  'fire3/concat': regular_pool,
+                  'fire4/concat': regular_pool} 
 
-    pool_after['late'] = {'fire2/concat':{'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX},
-                  'fire4/concat': {'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX},
-                  'fire5/concat': {'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX}} 
+    pool_after['early'] = {'conv1':regular_pool,
+                  'fire2/concat': regular_pool,
+                  'fire3/concat': regular_pool} 
+
+    pool_after['late'] = {'fire2/concat':regular_pool,
+                  'fire4/concat': regular_pool,
+                  'fire5/concat': regular_pool} 
 
     return pool_after
 
@@ -140,6 +142,7 @@ if __name__ == "__main__":
     batch_size=1024
 
     for p in pool_after.keys():
+
         net_proto = FireNet(batch_size, pool_after[p])
 
         #hack to deal with NetSpec's inability to have two layers both named 'data'
