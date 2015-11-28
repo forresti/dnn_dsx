@@ -16,6 +16,7 @@ if __name__ == "__main__":
 
     s = dict() #settings
 
+    '''
     #FireNet_default (not including beginning and ending conv layers)
     s['num_fire_layers']=4
 
@@ -27,8 +28,21 @@ if __name__ == "__main__":
     s['incr_add_1x1_1'] = 128
     s['incr_add_1x1_2'] = 128 #TODO: vary... these are cheap.
     s['incr_add_3x3_2'] = 64
-
     '''
+
+    #FireNet w/ 8 fire layers
+    s['num_fire_layers']=8
+
+    s['base_1x1_1'] = 64
+    s['base_1x1_2'] = 256
+    s['base_3x3_2'] = 32
+
+    s['incr_freq'] = 2 #increase # filters after every 'this many' layers.
+    s['incr_add_1x1_1'] = 64
+    s['incr_add_1x1_2'] = 256 
+    s['incr_add_3x3_2'] = 64
+
+    '''    
     #FireNet w/ 10 fire layers
     s['num_fire_layers']=10
 
