@@ -146,10 +146,17 @@ def get_pooling_schemes():
 
 def get_base_incr_schemes():
     base_incr = []
-    base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':32, 'incr_1x1_1':96, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) #~12MB
-    base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':32, 'incr_1x1_1':64, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) #~9MB
-    base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':64, 'incr_1x1_1':96, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) #~10.5MB
-    base_incr.append({'base_1x1_1':64, 'base_1x1_2':256, 'base_3x3_2':32, 'incr_1x1_1':96, 'incr_1x1_2':256, 'incr_3x3_2':48, 'incr_freq':2}) #~14.5MB
+    #base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':32, 'incr_1x1_1':96, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) #~12MB
+    #base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':32, 'incr_1x1_1':64, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) #~9MB
+    #base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':64, 'incr_1x1_1':96, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) #~10.5MB
+    #base_incr.append({'base_1x1_1':64, 'base_1x1_2':256, 'base_3x3_2':32, 'incr_1x1_1':96, 'incr_1x1_2':256, 'incr_3x3_2':48, 'incr_freq':2}) #~14.5MB
+    #base_incr.append({'base_1x1_1':64, 'base_1x1_2':64, 'base_3x3_2':64, 'incr_1x1_1':64, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) 
+    #base_incr.append({'base_1x1_1':64, 'base_1x1_2':64, 'base_3x3_2':64, 'incr_1x1_1':64, 'incr_1x1_2':64, 'incr_3x3_2':48, 'incr_freq':2}) 
+    #base_incr.append({'base_1x1_1':64, 'base_1x1_2':256, 'base_3x3_2':32, 'incr_1x1_1':96, 'incr_1x1_2':256, 'incr_3x3_2':48, 'incr_freq':4})
+    #base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':32, 'incr_1x1_1':32, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) #~5.5MB
+    i1x1_2 = 32
+    i3x3_2 = 128-i1x1_2
+    base_incr.append({'base_1x1_1':64, 'base_1x1_2':i1x1_2,  'base_3x3_2':i3x3_2, 'incr_1x1_1':64, 'incr_1x1_2':i1x1_2, 'incr_3x3_2':i3x3_2, 'incr_freq':2})
     return base_incr
 
 if __name__ == "__main__":
@@ -158,6 +165,7 @@ if __name__ == "__main__":
     pool_after = get_pooling_schemes()
     #for p in pool_after.keys():
     p = {'conv1':regular_pool, 'fire4/concat':regular_pool, 'fire8/concat':regular_pool} 
+    #p = {'conv1':regular_pool, 'fire2/concat':regular_pool, 'fire3/concat':regular_pool} 
 
     base_incr_schemes = get_base_incr_schemes()
     for s in base_incr_schemes:
@@ -171,7 +179,7 @@ if __name__ == "__main__":
         out_dir = 'nets/FireNet_8_fireLayers_base_%d_%d_%d_incr_%d_%d_%d_freq_%d' %(s['base_1x1_1'], s['base_1x1_2'], s['base_3x3_2'], 
                                                                                     s['incr_1x1_1'], s['incr_1x1_2'], s['incr_3x3_2'], s['incr_freq'])
         mkdir_p(out_dir)
-        #outF = 'FireNet_pool_%s.prototxt' %p #e.g. pool_early
+        #eoutF = 'FireNet_pool_%s.prototxt' %p #e.g. pool_early
         outF = out_dir + '/trainval.prototxt' 
         save_prototxt(net_proto, outF)
 
