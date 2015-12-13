@@ -8,6 +8,7 @@ from caffe import params as P
 from caffe.proto import caffe_pb2
 from IPython import embed
 from google.protobuf import text_format
+from random import choice
 import conf_firenet as conf
 
 phase='trainval'
@@ -144,6 +145,23 @@ def get_pooling_schemes():
 
     return pool_after
 
+def get_randomized_pooling_scheme(n_layers, n_poolings):
+    pool_after = [1] #for now, always pool after conv1.
+    remaining_poolings = n_poolings - 1
+
+    #TODO: assert(n_poolings >= n_layers)
+    #TODO: random seed
+
+    choices = [x for x in xrange(2, n_layers+1)]
+    while remaining_poolings > 0:
+        choices_ind = [x for x in xrange(0, len(choices))]
+        c_idx = choice(choices_ind)
+        curr_pool = choices.pop(c_idx) #grab this choice AND remove it from the list of choices
+        pool_after.append(curr_pool)
+        remaining_poolings = remaining_poolings - 1
+    pool_after = sorted(pool_after)
+    return pool_after
+
 def get_base_incr_schemes():
     base_incr = []
     #base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':32, 'incr_1x1_1':96, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) #~12MB
@@ -154,7 +172,7 @@ def get_base_incr_schemes():
     #base_incr.append({'base_1x1_1':64, 'base_1x1_2':64, 'base_3x3_2':64, 'incr_1x1_1':64, 'incr_1x1_2':64, 'incr_3x3_2':48, 'incr_freq':2}) 
     #base_incr.append({'base_1x1_1':64, 'base_1x1_2':256, 'base_3x3_2':32, 'incr_1x1_1':96, 'incr_1x1_2':256, 'incr_3x3_2':48, 'incr_freq':4})
     #base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':32, 'incr_1x1_1':32, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) #~5.5MB
-    i1x1_2 = 32
+    i1x1_2 = 64
     i3x3_2 = 128-i1x1_2
     base_incr.append({'base_1x1_1':64, 'base_1x1_2':i1x1_2,  'base_3x3_2':i3x3_2, 'incr_1x1_1':64, 'incr_1x1_2':i1x1_2, 'incr_3x3_2':i3x3_2, 'incr_freq':2})
     return base_incr
@@ -166,6 +184,8 @@ if __name__ == "__main__":
     #for p in pool_after.keys():
     p = {'conv1':regular_pool, 'fire4/concat':regular_pool, 'fire8/concat':regular_pool} 
     #p = {'conv1':regular_pool, 'fire2/concat':regular_pool, 'fire3/concat':regular_pool} 
+    #p = get_randomized_pooling_scheme(9, 3) #n_layers=9 (incl. conv1), n_poolings = 3
+    print p
 
     base_incr_schemes = get_base_incr_schemes()
     for s in base_incr_schemes:
@@ -182,5 +202,4 @@ if __name__ == "__main__":
         #eoutF = 'FireNet_pool_%s.prototxt' %p #e.g. pool_early
         outF = out_dir + '/trainval.prototxt' 
         save_prototxt(net_proto, outF)
-
 
