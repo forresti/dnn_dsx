@@ -20,11 +20,11 @@ if __name__ == "__main__":
     s['num_fire_layers']=8
 
     s['incr_freq'] = 2 #increase # filters after every 'this many' layers.
-    s['base_expand'] = 64 #number of (1x1_2 + 3x3_2) filters
-    s['incr_expand'] = 64 
+    s['base_expand'] = 128 #number of (1x1_2 + 3x3_2) filters
+    s['incr_expand'] = 128
 
-    s['3x3_expand_pct'] = 0.25 #percentage of (1x1_2 + 3x3_2) that are 3x3_2
-    s['compress_expand_ratio'] = 1.0 #ratio of 1x1_1 / (1x1_2 + 3x3_2)
+    s['3x3_expand_pct'] = 0.5 #percentage of (1x1_2 + 3x3_2) that are 3x3_2
+    s['compress_expand_ratio'] = 0.5 #ratio of 1x1_1 / (1x1_2 + 3x3_2)
 
     #FireNet w/ 10 fire layers...
     #TODO
