@@ -172,6 +172,7 @@ def get_base_incr_schemes():
     #base_incr.append({'base_1x1_1':64, 'base_1x1_2':64, 'base_3x3_2':64, 'incr_1x1_1':64, 'incr_1x1_2':64, 'incr_3x3_2':48, 'incr_freq':2}) 
     #base_incr.append({'base_1x1_1':64, 'base_1x1_2':256, 'base_3x3_2':32, 'incr_1x1_1':96, 'incr_1x1_2':256, 'incr_3x3_2':48, 'incr_freq':4})
     #base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':32, 'incr_1x1_1':32, 'incr_1x1_2':128, 'incr_3x3_2':48, 'incr_freq':2}) #~5.5MB
+    #base_incr.append({'base_1x1_1':64, 'base_1x1_2':64,  'base_3x3_2':64, 'incr_1x1_1':64, 'incr_1x1_2':128, 'incr_3x3_2':0, 'incr_freq':2})
     i1x1_2 = 64
     i3x3_2 = 128-i1x1_2
     base_incr.append({'base_1x1_1':64, 'base_1x1_2':i1x1_2,  'base_3x3_2':i3x3_2, 'incr_1x1_1':64, 'incr_1x1_2':i1x1_2, 'incr_3x3_2':i3x3_2, 'incr_freq':2})
