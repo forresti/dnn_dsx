@@ -77,6 +77,6 @@ if __name__ == "__main__":
     total_params_size = compute_params_size(layer_dims) #layer_dims is updated in-place
 
     #pprint(s)
-    #pprint(layer_dims)
+    pprint(layer_dims)
     print 'total params size:', total_params_size, 'MB'
     
