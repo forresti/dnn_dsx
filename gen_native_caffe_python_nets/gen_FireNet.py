@@ -194,8 +194,9 @@ if __name__ == "__main__":
 
     #pool_after = get_pooling_schemes()
     #p = {'conv1':regular_pool, 'fire4/concat':regular_pool, 'fire8/concat':regular_pool} 
-    #p = {'conv1':regular_pool, 'fire2/concat':regular_pool, 'fire3/concat':regular_pool}
+    p = {'conv1':regular_pool, 'fire2/concat':regular_pool, 'fire3/concat':regular_pool}
 
+    '''
     seed(3)
     for i in xrange(0,5): 
         [p, pint] = get_randomized_pooling_scheme(9, 3) #n_layers=9 (incl. conv1), n_poolings = 3
@@ -203,31 +204,31 @@ if __name__ == "__main__":
         #print pint
         pstr = '_'.join([str(x) for x in pint]) #[1,2,4] -> '1_2_4'
         print pstr
-        base_incr_schemes = get_base_incr_schemes()
+    '''
+    base_incr_schemes = get_base_incr_schemes()
 
-        for s in base_incr_schemes:
-            net_proto = FireNet(batch_size, p, s)
+    for s in base_incr_schemes:
+        net_proto = FireNet(batch_size, p, s)
 
-            #hack to deal with NetSpec's inability to have two layers both named 'data'
-            data_train_proto = get_train_data_layer(batch_size)
-            data_train_proto.MergeFrom(net_proto)
-            net_proto = data_train_proto
+        #hack to deal with NetSpec's inability to have two layers both named 'data'
+        data_train_proto = get_train_data_layer(batch_size)
+        data_train_proto.MergeFrom(net_proto)
+        net_proto = data_train_proto
 
-            #out_dir = 'nets/FireNet_8_fireLayers_base_%d_%d_%d_incr_%d_%d_%d_freq_%d' %(s['base_1x1_1'], s['base_1x1_2'], s['base_3x3_2'], 
-            #                                                                            s['incr_1x1_1'], s['incr_1x1_2'], s['incr_3x3_2'], s['incr_freq'])
-            out_dir = 'nets/FireNet_8_fireLayers_base_%d_%d_%d_incr_%d_%d_%d_freq_%d_pool_%s' %(s['base_1x1_1'], s['base_1x1_2'], s['base_3x3_2'],
-                                                                                        s['incr_1x1_1'], s['incr_1x1_2'], s['incr_3x3_2'], s['incr_freq'],
-                                                                                        pstr)
-            mkdir_p(out_dir)
-            #eoutF = 'FireNet_pool_%s.prototxt' %p #e.g. pool_early
-            outF = out_dir + '/trainval.prototxt' 
-            save_prototxt(net_proto, outF)
+        out_dir = 'nets/FireNet_8_fireLayers_base_%d_%d_%d_incr_%d_%d_%d_freq_%d' %(s['base_1x1_1'], s['base_1x1_2'], s['base_3x3_2'], 
+                                                                                    s['incr_1x1_1'], s['incr_1x1_2'], s['incr_3x3_2'], s['incr_freq'])
+        #out_dir = 'nets/FireNet_8_fireLayers_base_%d_%d_%d_incr_%d_%d_%d_freq_%d_pool_%s' %(s['base_1x1_1'], s['base_1x1_2'], s['base_3x3_2'],
+        #                                                                            s['incr_1x1_1'], s['incr_1x1_2'], s['incr_3x3_2'], s['incr_freq'], pstr)
 
-            copyfile('solver.prototxt', out_dir + '/solver.prototxt')
+        mkdir_p(out_dir)
+        outF = out_dir + '/trainval.prototxt' 
+        save_prototxt(net_proto, outF)
 
-            n_gpu = 32
-            out_gpu_file = out_dir + '/n_gpu.txt'
-            f = open(out_gpu_file, 'w')
-            f.write( str(n_gpu) )
-            f.close()
+        copyfile('solver.prototxt', out_dir + '/solver.prototxt')
+
+        n_gpu = 32
+        out_gpu_file = out_dir + '/n_gpu.txt'
+        f = open(out_gpu_file, 'w')
+        f.write( str(n_gpu) )
+        f.close()
 
