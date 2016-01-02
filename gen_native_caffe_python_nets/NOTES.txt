@@ -8,3 +8,7 @@ n.tops['test/layer']=L.SoftmaxWithLoss(n.ip1, n.label)
 
 2. in NetSpec, how do I create two layers called "data?" (one for training, one for testing)
 
+
+find/replace dataset...
+find */trainval.prototxt -exec sed -i '' 's/ilsvrc2012_val_256x256_lmdb/sports1M_0_486_val_lmdb/g' {} \;
+
