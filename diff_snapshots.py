@@ -46,6 +46,7 @@ def my_diff(np1, np2):
 
 #@param s1, s2 = NetParameter objects.
 def diff_snapshots(s1, s2):
+    print " calculating sum of diffs as sum(|s1|-|s2|)"
     for L in xrange(0, len(s1.layer)):
         Ls1 = s1.layer[L]
         Ls2 = s2.layer[L]
@@ -63,7 +64,7 @@ def diff_snapshots(s1, s2):
         param_s2 = copy_RepeatedScalarFieldContainer_to_numpy(param_s2)
 
         diff = my_diff(param_s1, param_s2)
-        print diff
+        print "  %s sum of diff: %f" %(Ls1.name, diff)
 
         #BIAS
         #param_s1 = Ls1.blob[1]
