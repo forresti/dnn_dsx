@@ -49,11 +49,53 @@ def FireNet_module_LL(n, bottom, firenet_dict, layer_idx):
     next_bottom = prefix+'conv3x3_2' #no need for 'concat' layer in linked list
     return next_bottom
 
+#idea: for the 3x3 layer, in_out_ratio controls (chans_in / chans_out)
+# regardless of in_out_ratio, we always want the 3x3 layer to have (chans_in * chans_out = sqrt_num_channels_in_out_3x3^2)
 def choose_num_output_LL(firenet_layer_idx, s):
     idx=firenet_layer_idx
     firenet_dict = dict()
-    firenet_dict['conv1x1_1_num_output'] = int(s['base_1x1_1'] + floor(idx/s['incr_freq']) * s['incr_1x1_1'])
-    firenet_dict['conv3x3_2_num_output'] = int(s['base_3x3_2'] + floor(idx/s['incr_freq']) * s['incr_3x3_2'])
+
+    #sqrt(num_channels_in_3x3 * num_channels_out_3x3)
+    sqrt_chans_in_out_3x3 = s['base_3x3_2'] + floor(idx/s['incr_freq']) * s['incr_3x3_2'])
+    
+    #(num_channels_in_3x3 * num_channels_out_3x3)
+    chans_in_out_3x3 = sqrt_chans_in_out_3x3**2
+
+
+    '''
+    #some math for calculating chans_in_3x3 and chans_out_3x3
+        #solve for:
+    x = chans_in_3x3
+    y = chans_out_3x3
+        #given:
+    a = (chans_in_3x3 * chans_out_3x3) = chans_in_out_3x3
+    b = (chans_in_3x3 / chans_out_3x3) = in_out_ratio
+
+        #in math terms:
+    x/y=a    #chans_in / chans_out = in_out_ratio
+    xy=b     #chans_in * chans_out = chans_in_out_3x3
+
+        #algebra time
+       x/y=a
+    -> x=ay
+    -> ayy=b    #substitute x into xy=b
+    -> ay^2=b
+    -> y^2=b/a
+    -> y=sqrt(b/a)    #ok, solved y
+        #a.k.a. chans_out_3x3 = sqrt(chans_in_out_3x3 / in_out_ratio)
+
+       xy=b
+    -> x=y/b
+    -> x=y/b
+    -> x=sqrt(b/a)/b    #substitute the solution for y. ... ok, solved x
+        #a.k.a. chans_in_3x3 = chans_out_3x3/chans_in_out_3x3 
+
+    '''
+
+    chans_in_3x3 = chans_in_out_3x3 
+
+    firenet_dict['conv3x3_2_num_output'] = 
+    firenet_dict['conv1x1_1_num_output'] = 
     return firenet_dict
 
 #takes a FireNet_module_func functor, which can be just about anything.
@@ -98,7 +140,8 @@ regular_pool = {'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX}
 def get_base_incr_schemes():
     base_incr = []
 
-    base_incr.append({'base_1x1_1':64, 'base_3x3_2':64, 'incr_1x1_1':64, 'incr_3x3_2':64, 'incr_freq':2})
+    #base_incr.append({'base_1x1_1':64, 'base_3x3_2':64, 'incr_1x1_1':64, 'incr_3x3_2':64, 'incr_freq':2})
+    base_incr.append({'base_3x3_2':96, 'incr_3x3_2':96, 'in_out_ratio':1, 'incr_freq':2})
     return base_incr
 
 '''

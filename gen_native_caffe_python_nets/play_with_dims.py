@@ -39,8 +39,22 @@ if __name__ == "__main__":
 
     s['incr_freq'] = 2 #increase # filters after every 'this many' layers.
     s['incr_add_1x1_1'] = 64
-    s['incr_add_1x1_2'] = 256 
+    s['incr_add_1x1_2'] = 256
     s['incr_add_3x3_2'] = 64
+
+    '''
+    #FireNet-LinkedList w/ 8 fire layers
+    s['num_fire_layers']=8
+
+    s['base_1x1_1'] = 96
+    s['base_1x1_2'] = 0
+    s['base_3x3_2'] = 96
+
+    s['incr_freq'] = 2 #increase # filters after every 'this many' layers.
+    s['incr_add_1x1_1'] = 96
+    s['incr_add_1x1_2'] = 0 
+    s['incr_add_3x3_2'] = 96
+    '''
 
     '''    
     #FireNet w/ 10 fire layers
