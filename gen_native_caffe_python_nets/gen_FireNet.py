@@ -12,7 +12,12 @@ from random import choice
 from random import seed
 from shutil import copyfile
 import conf_firenet as conf
-
+from util_FireNet import mkdir_p
+from util_FireNet import save_prototxt
+from util_FireNet import FireNet_pooling_layer
+from util_FireNet import FireNet_data_layer
+from util_FireNet import get_train_data_layer
+from util_FireNet import get_randomized_pooling_scheme
 phase='trainval'
 #phase='deploy'
 
@@ -26,16 +31,6 @@ a FireNet module (similar to inception module) is as follows:
    concat
 
 '''
-
-def mkdir_p(path):
-    if not os.access(path, os.F_OK):
-        os.mkdir(path)
-
-def save_prototxt(protobuf, out_fname):
-    f = open(out_fname, 'w')
-    f.write(text_format.MessageToString(protobuf))
-    f.flush()
-    f.close()
 
 #@param n = NetSpec object to append (passed by ref, so no need to return it)
 #@param bottom = e.g. 'pool1'
@@ -65,13 +60,6 @@ def FireNet_module(n, bottom, firenet_dict, layer_idx):
 
     #TODO: perhaps return the concat layer's name, so the next layer can use it as a 'bottom'
 
-def FireNet_pooling_layer(n, bottom, pool_spec, layer_idx):
-    p = pool_spec
-    next_bottom='pool'+str(layer_idx)
-    n.tops[next_bottom] = L.Pooling(n.tops[bottom], kernel_size=p['kernel_size'], 
-                                                stride=p['stride'], pool=p['pool']) 
-    return next_bottom
-
 def choose_num_output(firenet_layer_idx, s):
     idx=firenet_layer_idx
     firenet_dict = dict()
@@ -79,12 +67,6 @@ def choose_num_output(firenet_layer_idx, s):
     firenet_dict['conv1x1_2_num_output'] = int(s['base_1x1_2'] + floor(idx/s['incr_freq']) * s['incr_1x1_2'])
     firenet_dict['conv3x3_2_num_output'] = int(s['base_3x3_2'] + floor(idx/s['incr_freq']) * s['incr_3x3_2'])
     return firenet_dict
-
-#@param NetSpec n
-def FireNet_data_layer(n, batch_size):
-    #important: conf.test_lmdb
-    n.data, n.label = L.Data(batch_size=batch_size, backend=P.Data.LMDB, source=conf.test_lmdb, include=dict(phase=caffe_pb2.TEST),
-                             transform_param=dict(crop_size=227, mean_value=[104, 117, 123]), ntop=2)
 
 def FireNet(batch_size, pool_after, s):
     print s
@@ -119,15 +101,6 @@ def FireNet(batch_size, pool_after, s):
         n.accuracy_top5 = L.Accuracy(n.tops['pool_final'], n.label, include=dict(phase=caffe_pb2.TEST), top_k=5) 
     return n.to_proto()
 
-#get protobuf containing only a data layer
-def get_train_data_layer(batch_size):
-    #important: conf.train_lmdb
-    n = NetSpec()
-    n.data, n.label = L.Data(batch_size=batch_size, backend=P.Data.LMDB, source=conf.train_lmdb, include=dict(phase=caffe_pb2.TRAIN),
-                             transform_param=dict(crop_size=227, mean_value=[104, 117, 123]), ntop=2)
-    return n.to_proto()
-
-
 #default pooling:
 regular_pool = {'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX}
 
@@ -146,32 +119,6 @@ def get_pooling_schemes():
                   'fire5/concat': regular_pool} 
 
     return pool_after
-#@return pool_after_dict = ['conv1': {'stride': 2, 'pool': 0, 'kernel_size': 3}, ...]
-#@return pool_after = [1,2,4]
-def get_randomized_pooling_scheme(n_layers, n_poolings):
-    pool_after = [1] #for now, always pool after conv1.
-    remaining_poolings = n_poolings - 1
-
-    #TODO: assert(n_poolings >= n_layers)
-    #TODO: random seed
-
-    choices = [x for x in xrange(2, n_layers+1)]
-    while remaining_poolings > 0:
-        choices_ind = [x for x in xrange(0, len(choices))]
-        c_idx = choice(choices_ind)
-        curr_pool = choices.pop(c_idx) #grab this choice AND remove it from the list of choices
-        pool_after.append(curr_pool)
-        remaining_poolings = remaining_poolings - 1
-    pool_after = sorted(pool_after)
-
-    pool_after_dict = dict()
-    for p in pool_after:
-        if p==1:
-            pool_after_dict['conv1'] = regular_pool
-        else:
-            pool_after_dict['fire%d/concat'%p] = regular_pool
-
-    return [pool_after_dict, pool_after]
 
 def get_base_incr_schemes():
     base_incr = []
