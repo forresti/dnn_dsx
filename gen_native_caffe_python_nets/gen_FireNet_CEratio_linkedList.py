@@ -1,4 +1,5 @@
 from math import floor
+from math import sqrt
 import os
 #import caffe
 from caffe import Net
@@ -55,55 +56,57 @@ def choose_num_output_LL(firenet_layer_idx, s):
     idx=firenet_layer_idx
     firenet_dict = dict()
 
+    s['in_out_ratio'] = float(s['in_out_ratio'])
+
     #sqrt(num_channels_in_3x3 * num_channels_out_3x3)
-    sqrt_chans_in_out_3x3 = s['base_3x3_2'] + floor(idx/s['incr_freq']) * s['incr_3x3_2'])
+    sqrt_chans_in_out_3x3 = s['base_3x3_2'] + (floor(idx/s['incr_freq']) * s['incr_3x3_2']) #e.g. 64, 128, ...
     
     #(num_channels_in_3x3 * num_channels_out_3x3)
     chans_in_out_3x3 = sqrt_chans_in_out_3x3**2
 
     '''
-    the problem is similar to 'solving properties of a square'
+    the problem is similar to 'solving properties of a rectangle'
     given (for example):
-      in_out_ratio = 0.6 = 6/10
+      in_out_ratio = 0.6 = 0.6/1
       chans_in_out_3x3 = 16384 #128^2
 
     solve:
-      height (chans_out) = 6X
-      height (chans_out) = 10X     
+      height (chans_out) = 0.6X
+      height (chans_out) = 1X 
 
-            6X
+            0.6X
         -----------
         |         |
         |         |
         |  area:  |
-        |  16384  | 10X
+        |  16384  | 1X
         |         |
         |         |
         |         |
         |         |
         -----------
 
-        (6X)*(10X) = 16384
-        60 X^2 = 16384
-        X^2 = (16384/60)
-        X = sqrt(16384/60)
-        X = 16.5
+        (.6X)*(1X) = 16384
+        .6 X^2 = 16384
+        X^2 = (16384/.6)
+        X = sqrt(16384/.6)
+        X = 165    # = chans_out 
 
     so, the solution:
-      height (chans_out) = 6X = 6*16.5 = 99
-      height (chans_out) = 10X = 10*16.5 = 165
+      width  (chans_in) = .6X = .6*165 = 99
+      height (chans_out) = 1X = 1*165 = 165
    
     it checks out:
       165*99 = 16355 ~= 16384 (rounding error because I did stuff in terms of ints)
       99/165 = 0.6 (check.)
     '''
 
-    
+    X = sqrt(chans_in_out_3x3 / s['in_out_ratio']) #as in above rectangle example
+    chans_out_3x3 = X
+    chans_in_3x3 = X*s['in_out_ratio']
 
-    chans_in_3x3 = chans_in_out_3x3 
-
-    firenet_dict['conv3x3_2_num_output'] = 
-    firenet_dict['conv1x1_1_num_output'] = 
+    firenet_dict['conv1x1_1_num_output'] = int(chans_in_3x3) #because chans_out_1x1 = chans_in_3x3
+    firenet_dict['conv3x3_2_num_output'] = int(chans_out_3x3)
     return firenet_dict
 
 #takes a FireNet_module_func functor, which can be just about anything.
@@ -149,7 +152,7 @@ def get_base_incr_schemes():
     base_incr = []
 
     #base_incr.append({'base_1x1_1':64, 'base_3x3_2':64, 'incr_1x1_1':64, 'incr_3x3_2':64, 'incr_freq':2})
-    base_incr.append({'base_3x3_2':96, 'incr_3x3_2':96, 'in_out_ratio':1, 'incr_freq':2})
+    base_incr.append({'base_3x3_2':96, 'incr_3x3_2':96, 'in_out_ratio':1.0, 'incr_freq':2})
     return base_incr
 
 '''
@@ -174,8 +177,8 @@ if __name__ == "__main__":
         data_train_proto.MergeFrom(net_proto)
         net_proto = data_train_proto
 
-        out_dir = 'nets/FireNet_LL_8_fireLayers_base_%d_%d_incr_%d_%d_freq_%d' %(s['base_1x1_1'], s['base_3x3_2'], 
-                                                                                    s['incr_1x1_1'], s['incr_3x3_2'], s['incr_freq'])
+        out_dir = 'nets/FireNet_LL_8_fireLayers_base_%d_incr_%d_inOutRatio_%0.3f_freq_%d' %(s['base_3x3_2'], 
+                                                                                     s['incr_3x3_2'], s['in_out_ratio'], s['incr_freq'])
 
         mkdir_p(out_dir)
         outF = out_dir + '/trainval.prototxt' 
