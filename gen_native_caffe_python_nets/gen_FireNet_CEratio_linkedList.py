@@ -61,36 +61,44 @@ def choose_num_output_LL(firenet_layer_idx, s):
     #(num_channels_in_3x3 * num_channels_out_3x3)
     chans_in_out_3x3 = sqrt_chans_in_out_3x3**2
 
-
     '''
-    #some math for calculating chans_in_3x3 and chans_out_3x3
-        #solve for:
-    x = chans_in_3x3
-    y = chans_out_3x3
-        #given:
-    a = (chans_in_3x3 * chans_out_3x3) = chans_in_out_3x3
-    b = (chans_in_3x3 / chans_out_3x3) = in_out_ratio
+    the problem is similar to 'solving properties of a square'
+    given (for example):
+      in_out_ratio = 0.6 = 6/10
+      chans_in_out_3x3 = 16384 #128^2
 
-        #in math terms:
-    x/y=a    #chans_in / chans_out = in_out_ratio
-    xy=b     #chans_in * chans_out = chans_in_out_3x3
+    solve:
+      height (chans_out) = 6X
+      height (chans_out) = 10X     
 
-        #algebra time
-       x/y=a
-    -> x=ay
-    -> ayy=b    #substitute x into xy=b
-    -> ay^2=b
-    -> y^2=b/a
-    -> y=sqrt(b/a)    #ok, solved y
-        #a.k.a. chans_out_3x3 = sqrt(chans_in_out_3x3 / in_out_ratio)
+            6X
+        -----------
+        |         |
+        |         |
+        |  area:  |
+        |  16384  | 10X
+        |         |
+        |         |
+        |         |
+        |         |
+        -----------
 
-       xy=b
-    -> x=y/b
-    -> x=y/b
-    -> x=sqrt(b/a)/b    #substitute the solution for y. ... ok, solved x
-        #a.k.a. chans_in_3x3 = chans_out_3x3/chans_in_out_3x3 
+        (6X)*(10X) = 16384
+        60 X^2 = 16384
+        X^2 = (16384/60)
+        X = sqrt(16384/60)
+        X = 16.5
 
+    so, the solution:
+      height (chans_out) = 6X = 6*16.5 = 99
+      height (chans_out) = 10X = 10*16.5 = 165
+   
+    it checks out:
+      165*99 = 16355 ~= 16384 (rounding error because I did stuff in terms of ints)
+      99/165 = 0.6 (check.)
     '''
+
+    
 
     chans_in_3x3 = chans_in_out_3x3 
 
