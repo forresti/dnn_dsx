@@ -166,9 +166,9 @@ if __name__ == "__main__":
     batch_size=1024
 
     #pool_after = get_pooling_schemes()
-    #p = {'conv1':regular_pool, 'fire4/concat':regular_pool, 'fire8/concat':regular_pool} 
-    p = {'conv1':regular_pool, 'fire3/concat':regular_pool, 'fire6/concat':regular_pool}
-    #p = {'conv1':regular_pool, 'fire2/concat':regular_pool, 'fire3/concat':regular_pool}
+    p = {'conv1':regular_pool, 'fire4/conv3x3_2':regular_pool, 'fire8/conv3x3_2':regular_pool} 
+    #p = {'conv1':regular_pool, 'fire3/conv3x3_2':regular_pool, 'fire6/conv3x3_2':regular_pool}
+    #p = {'conv1':regular_pool, 'fire2/conv3x3_2':regular_pool, 'fire3/conv3x3_2':regular_pool}
 
     base_incr_schemes = get_base_incr_schemes()
 
@@ -180,7 +180,7 @@ if __name__ == "__main__":
         data_train_proto.MergeFrom(net_proto)
         net_proto = data_train_proto
 
-        out_dir = 'nets/y_FireNet_LL_8_fireLayers_base_%d_incr_%d_inOutRatio_%0.3f_freq_%d' %(s['base_3x3_2'], 
+        out_dir = 'nets/FireNet_LL_8_fireLayers_base_%d_incr_%d_inOutRatio_%0.3f_pool_1_4_8_freq_%d' %(s['base_3x3_2'], 
                                                                                      s['incr_3x3_2'], s['in_out_ratio'], s['incr_freq'])
 
         mkdir_p(out_dir)
