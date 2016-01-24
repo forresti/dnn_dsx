@@ -94,6 +94,7 @@ def FireNet(batch_size, pool_after, s):
     n.tops['conv_final'] = L.Convolution(n.tops[curr_bottom], kernel_size=1, pad=1, num_output=1000, weight_filler=dict(type='gaussian', std=0.01, mean=0.0)) 
     n.tops['relu_conv_final'] = L.ReLU(n.tops['conv_final'], in_place=True) 
     n.tops['pool_final'] = L.Pooling(n.tops['conv_final'], global_pooling=1, pool=P.Pooling.AVE)
+    embed()
  
     if phase == 'trainval':
         n.loss = L.SoftmaxWithLoss(n.tops['pool_final'], n.label, include=dict(phase=caffe_pb2.TRAIN))
@@ -140,8 +141,8 @@ if __name__ == "__main__":
     batch_size=1024
 
     #pool_after = get_pooling_schemes()
-    #p = {'conv1':regular_pool, 'fire4/concat':regular_pool, 'fire8/concat':regular_pool} 
-    p = {'conv1':regular_pool, 'fire2/concat':regular_pool, 'fire3/concat':regular_pool}
+    p = {'conv1':regular_pool, 'fire4/concat':regular_pool, 'fire8/concat':regular_pool} 
+    #p = {'conv1':regular_pool, 'fire2/concat':regular_pool, 'fire3/concat':regular_pool}
 
     '''
     seed(3)

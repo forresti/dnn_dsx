@@ -124,7 +124,7 @@ def FireNet_generic(FireNet_module_func, choose_num_output_func, batch_size, poo
 
     if curr_bottom in pool_after.keys():
         curr_bottom = FireNet_pooling_layer(n, curr_bottom, pool_after[curr_bottom], layer_idx)
-    
+
     for layer_idx in xrange(2,10):
         firenet_dict = choose_num_output_func(layer_idx-2, s)
         print firenet_dict

@@ -16,6 +16,13 @@ def mkdir_p(path):
     if not os.access(path, os.F_OK):
         os.mkdir(path)
 
+#@net_file = e.g. 'trainval.prototxt'
+def load_prototxt(net_file):
+    net_proto = caffe_pb2.NetParameter()
+    net_str = open(net_file).read()
+    text_format.Merge(net_str, net_proto)
+    return net_proto
+
 def save_prototxt(protobuf, out_fname):
     f = open(out_fname, 'w')
     f.write(text_format.MessageToString(protobuf))
