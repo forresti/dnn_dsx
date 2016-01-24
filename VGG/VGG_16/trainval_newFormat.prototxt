@@ -8,7 +8,7 @@ layer {
     phase: TRAIN
   }
   transform_param {
-    crop_size: 227
+    crop_size: 224
     mean_value: 104
     mean_value: 117
     mean_value: 123
@@ -28,7 +28,7 @@ layer {
     phase: TEST
   }
   transform_param {
-    crop_size: 227
+    crop_size: 224
     mean_value: 104
     mean_value: 117
     mean_value: 123
