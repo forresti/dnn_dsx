@@ -134,7 +134,7 @@ def FireNet_generic(FireNet_module_func, choose_num_output_func, batch_size, poo
             curr_bottom = FireNet_pooling_layer(n, curr_bottom, pool_after[curr_bottom], layer_idx) 
 
     n.tops['drop'+str(layer_idx)] = L.Dropout(n.tops[curr_bottom], dropout_ratio=0.5, in_place=True)
-    n.tops['conv_final'] = L.Convolution(n.tops[curr_bottom], kernel_size=1, pad=1, num_output=1000, weight_filler=dict(type='gaussian', std=0.01, mean=0.0)) 
+    n.tops['conv_final'] = L.Convolution(n.tops[curr_bottom], kernel_size=1, num_output=1000, weight_filler=dict(type='gaussian', std=0.01, mean=0.0)) 
     n.tops['relu_conv_final'] = L.ReLU(n.tops['conv_final'], in_place=True) 
     n.tops['pool_final'] = L.Pooling(n.tops['conv_final'], global_pooling=1, pool=P.Pooling.AVE)
  
