@@ -90,6 +90,12 @@ def FireNet(batch_size, pool_after, s):
             curr_bottom = FireNet_pooling_layer(n, curr_bottom, pool_after[curr_bottom], layer_idx) 
 
     n.tops['drop'+str(layer_idx)] = L.Dropout(n.tops[curr_bottom], dropout_ratio=0.5, in_place=True)
+
+    #optional pre_conv_final (w/ appropriate CEratio)
+    n.pre_conv_final = L.Convolution(n.data, kernel_size=1, num_output=int(1000*s['CEratio']), stride=1, weight_filler=dict(type='xavier'))
+    n.tops['relu_pre_conv_final'] = L.ReLU(n.tops['pre_conv_final'], in_place=True)
+    curr_bottom='pre_conv_final'
+
     n.tops['conv_final'] = L.Convolution(n.tops[curr_bottom], kernel_size=1, num_output=1000, weight_filler=dict(type='gaussian', std=0.01, mean=0.0)) 
     n.tops['relu_conv_final'] = L.ReLU(n.tops['conv_final'], in_place=True) 
     n.tops['pool_final'] = L.Pooling(n.tops['conv_final'], global_pooling=1, pool=P.Pooling.AVE)
@@ -122,8 +128,18 @@ def get_pooling_schemes():
 def get_base_incr_schemes():
     base_incr = []
     #CEratio = 0.5 # (1x1_1) / (1x1_2 + 3x3_2)
-    for CEratio in [0.125, 0.25, 0.5, 0.75, 1.0]:
+
+    #for CEratio in [0.125, 0.25, 0.5, 0.75, 1.0]:
+    for CEratio in [0.125, .150, 0.175, .200, .225, .250]:
         base_incr.append({'base_1x1_2':64,  'base_3x3_2':64, 'incr_1x1_2':64, 'incr_3x3_2':64, 'CEratio':CEratio, 'incr_freq':2})
+
+    '''
+    CEratio = .75
+    base_incr.append({'base_1x1_2':64,  'base_3x3_2':64, 'incr_1x1_2':128, 'incr_3x3_2':64, 'CEratio':CEratio, 'incr_freq':2})
+    base_incr.append({'base_1x1_2':64,  'base_3x3_2':64, 'incr_1x1_2':128, 'incr_3x3_2':128, 'CEratio':CEratio, 'incr_freq':2})
+    base_incr.append({'base_1x1_2':64,  'base_3x3_2':64, 'incr_1x1_2':192, 'incr_3x3_2':64, 'CEratio':CEratio, 'incr_freq':2})
+    base_incr.append({'base_1x1_2':16,  'base_3x3_2':64, 'incr_1x1_2':192, 'incr_3x3_2':64, 'CEratio':CEratio, 'incr_freq':2})
+    '''
     return base_incr
 
 if __name__ == "__main__":
@@ -143,8 +159,12 @@ if __name__ == "__main__":
         data_train_proto.MergeFrom(net_proto)
         net_proto = data_train_proto
 
-        out_dir = 'nets/FireNet_8_fireLayers_base_r_%d_%d_incr_r_%d_%d_CEratio_%0.3f_freq_%d' %(s['base_1x1_2'], s['base_3x3_2'], 
+        #out_dir = 'nets/FireNet_8_fireLayers_base_r_%d_%d_incr_r_%d_%d_CEratio_%0.3f_freq_%d' %(s['base_1x1_2'], s['base_3x3_2'], 
+        #                                                                            s['incr_1x1_2'], s['incr_3x3_2'], s['CEratio'], s['incr_freq'])
+
+        out_dir = 'nets/FireNet_8_fireLayers_base_r_%d_%d_incr_r_%d_%d_CEratio_%0.3f_freq_%d_withFinalCE' %(s['base_1x1_2'], s['base_3x3_2'], 
                                                                                     s['incr_1x1_2'], s['incr_3x3_2'], s['CEratio'], s['incr_freq'])
+
 
         mkdir_p(out_dir)
         #eoutF = 'FireNet_pool_%s.prototxt' %p #e.g. pool_early
