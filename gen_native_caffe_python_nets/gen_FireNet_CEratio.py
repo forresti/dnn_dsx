@@ -92,7 +92,7 @@ def FireNet(batch_size, pool_after, s):
     n.tops['drop'+str(layer_idx)] = L.Dropout(n.tops[curr_bottom], dropout_ratio=0.5, in_place=True)
 
     #optional pre_conv_final (w/ appropriate CEratio)
-    n.pre_conv_final = L.Convolution(n.data, kernel_size=1, num_output=int(1000*s['CEratio']), stride=1, weight_filler=dict(type='xavier'))
+    n.pre_conv_final = L.Convolution(n.tops[curr_bottom], kernel_size=1, num_output=int(1000*s['CEratio']), stride=1, weight_filler=dict(type='xavier'))
     n.tops['relu_pre_conv_final'] = L.ReLU(n.tops['pre_conv_final'], in_place=True)
     curr_bottom='pre_conv_final'
 
