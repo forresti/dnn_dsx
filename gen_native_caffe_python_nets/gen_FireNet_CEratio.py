@@ -85,7 +85,7 @@ def FireNet(batch_size, pool_after, s):
         n.tops['pool1'] = L.Pooling(n.tops[curr_bottom], kernel_size=3, stride=2, pool=P.Pooling.MAX)
         curr_bottom = 'pool1'    
 
-    for layer_idx in xrange(2,10):
+    for layer_idx in xrange(2, s['n_layers']+2):
         firenet_dict = choose_num_output(layer_idx-2, s)
         print firenet_dict
         curr_bottom = FireNet_module(n, curr_bottom, firenet_dict, layer_idx) 
@@ -98,9 +98,9 @@ def FireNet(batch_size, pool_after, s):
     n.tops['drop'+str(layer_idx)] = L.Dropout(n.tops[curr_bottom], dropout_ratio=0.5, in_place=True)
 
     #optional pre_conv_final (w/ appropriate CEratio)
-    n.pre_conv_final = L.Convolution(n.tops[curr_bottom], kernel_size=1, num_output=int(1000*s['CEratio']), stride=1, weight_filler=dict(type='xavier'))
-    n.tops['relu_pre_conv_final'] = L.ReLU(n.tops['pre_conv_final'], in_place=True)
-    curr_bottom='pre_conv_final'
+    #n.pre_conv_final = L.Convolution(n.tops[curr_bottom], kernel_size=1, num_output=int(1000*s['CEratio']), stride=1, weight_filler=dict(type='xavier'))
+    #n.tops['relu_pre_conv_final'] = L.ReLU(n.tops['pre_conv_final'], in_place=True)
+    #curr_bottom='pre_conv_final'
 
     n.tops['conv_final'] = L.Convolution(n.tops[curr_bottom], kernel_size=1, num_output=1000, weight_filler=dict(type='gaussian', std=0.01, mean=0.0)) 
     n.tops['relu_conv_final'] = L.ReLU(n.tops['conv_final'], in_place=True) 
@@ -112,33 +112,24 @@ def FireNet(batch_size, pool_after, s):
         n.accuracy_top5 = L.Accuracy(n.tops['pool_final'], n.label, include=dict(phase=caffe_pb2.TEST), top_k=5) 
     return n.to_proto()
 
-#default pooling:
-regular_pool = {'kernel_size':3, 'stride':2, 'pool':P.Pooling.MAX}
-
-def get_pooling_schemes():
-    pool_after = dict()
-    pool_after['default'] = {'conv1':regular_pool,
-                  'fire3/concat': regular_pool,
-                  'fire4/concat': regular_pool} 
-
-    pool_after['early'] = {'conv1':regular_pool,
-                  'fire2/concat': regular_pool,
-                  'fire3/concat': regular_pool} 
-
-    pool_after['late'] = {'fire2/concat':regular_pool,
-                  'fire4/concat': regular_pool,
-                  'fire5/concat': regular_pool} 
-
-    return pool_after
+def get_pooling_schemes_new():
+    p = []
+    p.append({1,4,8})
+    p.append({1,2,4,8})
+    p.append({1,3,6})
+    p.append({1,3,5})
+    p.append({1,3,5,7})
+    return p
 
 def get_base_incr_schemes():
     base_incr = []
     #CEratio = 0.5 # (1x1_1) / (1x1_2 + 3x3_2)
+    #n_layers is number of fire layers.
 
     #for CEratio in [0.125, 0.25, 0.5, 0.75, 1.0]:
     #for CEratio in [0.125, .150, 0.175, .200, .225, .250]:
     for CEratio in [0.125, 0.175]:
-        base_incr.append({'base_1x1_2':64,  'base_3x3_2':64, 'incr_1x1_2':64, 'incr_3x3_2':64, 'CEratio':CEratio, 'incr_freq':2})
+        base_incr.append({'base_1x1_2':64,  'base_3x3_2':64, 'incr_1x1_2':64, 'incr_3x3_2':64, 'CEratio':CEratio, 'incr_freq':2, 'n_layers':7})
 
     '''
     CEratio = .75
@@ -152,42 +143,42 @@ def get_base_incr_schemes():
 if __name__ == "__main__":
     batch_size=1024
 
-    #pool_after = get_pooling_schemes()
-    #for p in pool_after.keys():
-    #p = {'conv1':regular_pool, 'fire4/concat':regular_pool, 'fire8/concat':regular_pool} 
-    #p = {'conv1':regular_pool, 'fire2/concat':regular_pool, 'fire3/concat':regular_pool} 
+    #p = {1,4,8}
+    #p = {1,2,4,8}
+    #p = {1,3,5,7}
+    pooling_schemes = get_pooling_schemes_new()
 
-    p = {1,2,4,8}
-    pstr = '_'.join([str(x) for x in sorted(p)]) #[1,2,4] -> '1_2_4'
+    for p in pooling_schemes:
+        pstr = '_'.join([str(x) for x in sorted(p)]) #[1,2,4] -> '1_2_4'
 
-    base_incr_schemes = get_base_incr_schemes()
-    for s in base_incr_schemes:
-        net_proto = FireNet(batch_size, p, s)
+        base_incr_schemes = get_base_incr_schemes()
+        for s in base_incr_schemes:
+            net_proto = FireNet(batch_size, p, s)
 
-        #hack to deal with NetSpec's inability to have two layers both named 'data'
-        data_train_proto = get_train_data_layer(batch_size)
-        data_train_proto.MergeFrom(net_proto)
-        net_proto = data_train_proto
+            #hack to deal with NetSpec's inability to have two layers both named 'data'
+            data_train_proto = get_train_data_layer(batch_size)
+            data_train_proto.MergeFrom(net_proto)
+            net_proto = data_train_proto
 
-        #out_dir = 'nets/FireNet_8_fireLayers_base_r_%d_%d_incr_r_%d_%d_CEratio_%0.3f_freq_%d' %(s['base_1x1_2'], s['base_3x3_2'], 
-        #                                                                            s['incr_1x1_2'], s['incr_3x3_2'], s['CEratio'], s['incr_freq'])
+            #out_dir = 'nets/FireNet_8_fireLayers_base_r_%d_%d_incr_r_%d_%d_CEratio_%0.3f_freq_%d' %(s['base_1x1_2'], s['base_3x3_2'], 
+            #                                                                            s['incr_1x1_2'], s['incr_3x3_2'], s['CEratio'], s['incr_freq'])
 
-        #out_dir = 'nets/FireNet_8_fireLayers_base_r_%d_%d_incr_r_%d_%d_CEratio_%0.3f_freq_%d_withFinalCE' %(s['base_1x1_2'], s['base_3x3_2'], 
-        #                                                                            s['incr_1x1_2'], s['incr_3x3_2'], s['CEratio'], s['incr_freq'])
+            #out_dir = 'nets/FireNet_8_fireLayers_base_r_%d_%d_incr_r_%d_%d_CEratio_%0.3f_freq_%d_withFinalCE' %(s['base_1x1_2'], s['base_3x3_2'], 
+            #                                                                            s['incr_1x1_2'], s['incr_3x3_2'], s['CEratio'], s['incr_freq'])
 
-        out_dir = 'nets/FireNet_8_fireLayers_base_r_%d_%d_incr_r_%d_%d_CEratio_%0.3f_freq_%d_pool_%s' %(s['base_1x1_2'], s['base_3x3_2'],
-                                                                                    s['incr_1x1_2'], s['incr_3x3_2'], s['CEratio'], s['incr_freq'], pstr)
+            out_dir = 'nets/FireNet_%d_fireLayers_base_r_%d_%d_incr_r_%d_%d_CEratio_%0.3f_freq_%d_pool_%s' %(s['n_layers'], s['base_1x1_2'], s['base_3x3_2'],
+                                                                                        s['incr_1x1_2'], s['incr_3x3_2'], s['CEratio'], s['incr_freq'], pstr)
 
-        mkdir_p(out_dir)
-        #eoutF = 'FireNet_pool_%s.prototxt' %p #e.g. pool_early
-        outF = out_dir + '/trainval.prototxt' 
-        save_prototxt(net_proto, outF)
+            mkdir_p(out_dir)
+            #eoutF = 'FireNet_pool_%s.prototxt' %p #e.g. pool_early
+            outF = out_dir + '/trainval.prototxt' 
+            save_prototxt(net_proto, outF)
 
-        copyfile('solver.prototxt', out_dir + '/solver.prototxt')
+            copyfile('solver.prototxt', out_dir + '/solver.prototxt')
 
-        n_gpu = 32
-        out_gpu_file = out_dir + '/n_gpu.txt'
-        f = open(out_gpu_file, 'w')
-        f.write( str(n_gpu) )
-        f.close()
+            n_gpu = 32
+            out_gpu_file = out_dir + '/n_gpu.txt'
+            f = open(out_gpu_file, 'w')
+            f.write( str(n_gpu) )
+            f.close()
 
