@@ -78,16 +78,22 @@ def FireNet(batch_size, pool_after, s):
     curr_bottom = 'conv1'
     n.tops['relu_conv1'] = L.ReLU(n.tops[curr_bottom], in_place=True)
 
-    if curr_bottom in pool_after.keys():
-        curr_bottom = FireNet_pooling_layer(n, curr_bottom, pool_after[curr_bottom], layer_idx)
-    
+    #if curr_bottom in pool_after.keys():
+    #    curr_bottom = FireNet_pooling_layer(n, curr_bottom, pool_after[curr_bottom], layer_idx)
+
+    if layer_idx in pool_after:
+        n.tops['pool1'] = L.Pooling(n.tops[curr_bottom], kernel_size=3, stride=2, pool=P.Pooling.MAX)
+        curr_bottom = 'pool1'    
+
     for layer_idx in xrange(2,10):
         firenet_dict = choose_num_output(layer_idx-2, s)
         print firenet_dict
         curr_bottom = FireNet_module(n, curr_bottom, firenet_dict, layer_idx) 
 
-        if curr_bottom in pool_after.keys():
-            curr_bottom = FireNet_pooling_layer(n, curr_bottom, pool_after[curr_bottom], layer_idx) 
+        if layer_idx in pool_after:
+            next_bottom = 'pool%d' %layer_idx
+            n.tops[next_bottom] = L.Pooling(n.tops[curr_bottom], kernel_size=3, stride=2, pool=P.Pooling.MAX)
+            curr_bottom = next_bottom
 
     n.tops['drop'+str(layer_idx)] = L.Dropout(n.tops[curr_bottom], dropout_ratio=0.5, in_place=True)
 
@@ -130,7 +136,8 @@ def get_base_incr_schemes():
     #CEratio = 0.5 # (1x1_1) / (1x1_2 + 3x3_2)
 
     #for CEratio in [0.125, 0.25, 0.5, 0.75, 1.0]:
-    for CEratio in [0.125, .150, 0.175, .200, .225, .250]:
+    #for CEratio in [0.125, .150, 0.175, .200, .225, .250]:
+    for CEratio in [0.125, 0.175]:
         base_incr.append({'base_1x1_2':64,  'base_3x3_2':64, 'incr_1x1_2':64, 'incr_3x3_2':64, 'CEratio':CEratio, 'incr_freq':2})
 
     '''
@@ -145,10 +152,13 @@ def get_base_incr_schemes():
 if __name__ == "__main__":
     batch_size=1024
 
-    pool_after = get_pooling_schemes()
+    #pool_after = get_pooling_schemes()
     #for p in pool_after.keys():
-    p = {'conv1':regular_pool, 'fire4/concat':regular_pool, 'fire8/concat':regular_pool} 
+    #p = {'conv1':regular_pool, 'fire4/concat':regular_pool, 'fire8/concat':regular_pool} 
     #p = {'conv1':regular_pool, 'fire2/concat':regular_pool, 'fire3/concat':regular_pool} 
+
+    p = {1,2,4,8}
+    pstr = '_'.join([str(x) for x in sorted(p)]) #[1,2,4] -> '1_2_4'
 
     base_incr_schemes = get_base_incr_schemes()
     for s in base_incr_schemes:
@@ -162,9 +172,11 @@ if __name__ == "__main__":
         #out_dir = 'nets/FireNet_8_fireLayers_base_r_%d_%d_incr_r_%d_%d_CEratio_%0.3f_freq_%d' %(s['base_1x1_2'], s['base_3x3_2'], 
         #                                                                            s['incr_1x1_2'], s['incr_3x3_2'], s['CEratio'], s['incr_freq'])
 
-        out_dir = 'nets/FireNet_8_fireLayers_base_r_%d_%d_incr_r_%d_%d_CEratio_%0.3f_freq_%d_withFinalCE' %(s['base_1x1_2'], s['base_3x3_2'], 
-                                                                                    s['incr_1x1_2'], s['incr_3x3_2'], s['CEratio'], s['incr_freq'])
+        #out_dir = 'nets/FireNet_8_fireLayers_base_r_%d_%d_incr_r_%d_%d_CEratio_%0.3f_freq_%d_withFinalCE' %(s['base_1x1_2'], s['base_3x3_2'], 
+        #                                                                            s['incr_1x1_2'], s['incr_3x3_2'], s['CEratio'], s['incr_freq'])
 
+        out_dir = 'nets/FireNet_8_fireLayers_base_r_%d_%d_incr_r_%d_%d_CEratio_%0.3f_freq_%d_pool_%s' %(s['base_1x1_2'], s['base_3x3_2'],
+                                                                                    s['incr_1x1_2'], s['incr_3x3_2'], s['CEratio'], s['incr_freq'], pstr)
 
         mkdir_p(out_dir)
         #eoutF = 'FireNet_pool_%s.prototxt' %p #e.g. pool_early
