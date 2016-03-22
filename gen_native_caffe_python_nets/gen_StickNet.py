@@ -70,6 +70,9 @@ def StickNet(batch_size, s):
     n_filt = choose_num_output(1, 1, _ch, activH, activW, s['flop_per_img_target'], s['n_layers']) #only using this for conv1 to avoid oscillations.
     n_filt = round_to(n_filt, round_to_nearest) #make divisible by 8
 
+    #FIXME: somehow account for num_output produced by conv1 when selecting number of filters for conv2. (else, conv2 goes way over budget on flops.)
+    # perhaps we need to find the number N such that N^2*activations = flop_per_img_target?
+
     idx_minor = 1
     idx_major = 1
 
