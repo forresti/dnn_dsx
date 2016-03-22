@@ -53,17 +53,6 @@ TODO:
 2.   name layers conv1_1, conv1_2, pool1, conv2_1, ... pool2, conv3_1, etc.
 3.   [done] gen pool layers 
 '''
-
-'''
-#@n = NetSpec, which is updated in place.
-def conv_relu_xavier(n, kernel_size, num_output, layer_idx_str, curr_bottom):
-    next_bottom = 'conv_%s' %layer_idx_str
-    n.tops[next_bottom] = L.Convolution(n.tops[curr_bottom], kernel_size=1, num_output=num_output, weight_filler=dict(type='xavier'))
-    curr_bottom = next_bottom
-    n.tops['relu_conv_%s' %layer_idx_str] = L.ReLU(n.tops[curr_bottom], in_place=True)
-    return curr_bottom
-'''
-
 def StickNet(batch_size, s):
     inImgH = 224 #TODO: put inImg{H,W} into 's' if necessary.
     inImgW = 224
