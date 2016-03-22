@@ -129,7 +129,7 @@ def get_base_incr_schemes():
     #for CEratio in [0.125, 0.25, 0.5, 0.75, 1.0]:
     #for CEratio in [0.125, .150, 0.175, .200, .225, .250]:
     for CEratio in [0.125, 0.175]:
-        base_incr.append({'base_1x1_2':64,  'base_3x3_2':64, 'incr_1x1_2':64, 'incr_3x3_2':64, 'CEratio':CEratio, 'incr_freq':2, 'n_layers':7})
+        base_incr.append({'base_1x1_2':64,  'base_3x3_2':64, 'incr_1x1_2':64, 'incr_3x3_2':64, 'CEratio':CEratio, 'incr_freq':2, 'n_layers':8})
 
     '''
     CEratio = .75
