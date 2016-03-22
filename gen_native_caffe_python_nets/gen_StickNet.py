@@ -86,7 +86,9 @@ def StickNet(batch_size, s):
 
         #generate layer
         ksize=1
-        curr_bottom = conv_relu_xavier(n, ksize, n_filt, layer_str, curr_bottom)
+        stride=1
+        pad=0
+        curr_bottom = conv_relu_xavier(n, ksize, n_filt, layer_str, stride, pad, curr_bottom)
         _ch = n_filt #for next layer
 
         if layer_idx in s['pool_after'].keys():
