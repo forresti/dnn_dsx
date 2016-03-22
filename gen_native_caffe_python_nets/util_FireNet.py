@@ -12,6 +12,14 @@ from random import seed
 from shutil import copyfile
 import conf_firenet as conf
 
+#@n = NetSpec, which is updated in place.
+def conv_relu_xavier(n, kernel_size, num_output, layer_idx_str, curr_bottom):
+    next_bottom = 'conv_%s' %layer_idx_str
+    n.tops[next_bottom] = L.Convolution(n.tops[curr_bottom], kernel_size=1, num_output=num_output, weight_filler=dict(type='xavier'))
+    curr_bottom = next_bottom
+    n.tops['relu_conv_%s' %layer_idx_str] = L.ReLU(n.tops[curr_bottom], in_place=True)
+    return curr_bottom
+
 def mkdir_p(path):
     if not os.access(path, os.F_OK):
         os.mkdir(path)

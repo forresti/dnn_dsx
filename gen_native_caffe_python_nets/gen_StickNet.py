@@ -16,6 +16,7 @@ from util_FireNet import FireNet_pooling_layer
 from util_FireNet import FireNet_data_layer
 from util_FireNet import get_train_data_layer
 from util_FireNet import get_randomized_pooling_scheme
+from util_FireNet import conv_relu_xavier
 phase='trainval'
 #phase='deploy'
 
@@ -53,6 +54,7 @@ TODO:
 3.   [done] gen pool layers 
 '''
 
+'''
 #@n = NetSpec, which is updated in place.
 def conv_relu_xavier(n, kernel_size, num_output, layer_idx_str, curr_bottom):
     next_bottom = 'conv_%s' %layer_idx_str
@@ -60,6 +62,7 @@ def conv_relu_xavier(n, kernel_size, num_output, layer_idx_str, curr_bottom):
     curr_bottom = next_bottom
     n.tops['relu_conv_%s' %layer_idx_str] = L.ReLU(n.tops[curr_bottom], in_place=True)
     return curr_bottom
+'''
 
 def StickNet(batch_size, s):
     inImgH = 224 #TODO: put inImg{H,W} into 's' if necessary.
@@ -137,10 +140,11 @@ def get_base_incr_schemes():
     base_incr = []
     #0.5 TF = 500,000,000,000 (per batch of 1024)
     #per img, we want: 500,000,000 FLOPS.
-    flop_per_img_target = 500000000
-    base_incr.append({'flop_per_img_target':flop_per_img_target, 'n_layers':20, 'pool_after':{1:dp(), 5:dp(), 9:dp(), 13:dp()}})
 
-    for flop_per_img_target in [250000000, 500000000, 1000000000]:
+    #flop_per_img_target = 500000000 #out of memory ... going smaller.
+    #base_incr.append({'flop_per_img_target':flop_per_img_target, 'n_layers':20, 'pool_after':{1:dp(), 5:dp(), 9:dp(), 13:dp()}})
+
+    for flop_per_img_target in [25000000, 50000000, 100000000, 250000000]:
         for n_layers in [8, 10, 15, 20]:
             base_incr.append({'flop_per_img_target':flop_per_img_target, 'n_layers':n_layers, 'pool_after':{1:dp(), 5:dp(), 9:dp(), 13:dp()}})
 
