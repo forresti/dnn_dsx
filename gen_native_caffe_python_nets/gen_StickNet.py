@@ -84,7 +84,7 @@ def StickNet(batch_size, s):
     #this goes to (n_layers-1) ... then we do conv_final separately because it has a different weight init.
     for layer_idx in xrange(1, s['n_layers']):
 
-        layer_str = '%d_%d' %(idx_major, idx_minor)
+        layer_str = '%d.%d' %(idx_major, idx_minor)
 
         #select number of filters in this layer:
         #[activH, activW] = est_activ_size(inImgH, inImgW, _totalStride)
@@ -138,8 +138,11 @@ def get_base_incr_schemes():
     #0.5 TF = 500,000,000,000 (per batch of 1024)
     #per img, we want: 500,000,000 FLOPS.
     flop_per_img_target = 500000000
-
     base_incr.append({'flop_per_img_target':flop_per_img_target, 'n_layers':20, 'pool_after':{1:dp(), 5:dp(), 9:dp(), 13:dp()}})
+
+    for flop_per_img_target in [250000000, 500000000, 1000000000]:
+        for n_layers in [8, 10, 15, 20]:
+            base_incr.append({'flop_per_img_target':flop_per_img_target, 'n_layers':n_layers, 'pool_after':{1:dp(), 5:dp(), 9:dp(), 13:dp()}})
 
     #TODO: optional 'conv1_override'
 
@@ -152,11 +155,12 @@ def scheme_to_fname(s):
     p = s['pool_after'].keys()
     pstr = '_'.join([str(x) for x in sorted(p)]) #[1,2,4] -> '1_2_4'
 
-    st = 'nets/StickNet_%d_layers_%d_flops_pool_%s' %(s['n_layers'], s['flop_per_img_target'], pstr)
+    #st = 'nets/StickNet_warmup_%d_layers_%d_flops_pool_%s' %(s['n_layers'], s['flop_per_img_target'], pstr)
+    st = 'nets/StickNet_warmup_%d_flops_%d_layers_pool_%s' %(s['flop_per_img_target'], s['n_layers'], pstr)
     return st
 
 if __name__ == "__main__":
-    batch_size=1024
+    batch_size=512
 
     base_incr_schemes = get_base_incr_schemes()
     for s in base_incr_schemes:
@@ -174,9 +178,9 @@ if __name__ == "__main__":
         outF = out_dir + '/trainval.prototxt' 
         save_prototxt(net_proto, outF)
 
-        copyfile('solver.prototxt', out_dir + '/solver.prototxt')
+        copyfile('warmup_solver.prototxt', out_dir + '/solver.prototxt')
 
-        n_gpu = 32
+        n_gpu = 16
         out_gpu_file = out_dir + '/n_gpu.txt'
         f = open(out_gpu_file, 'w')
         f.write( str(n_gpu) )
