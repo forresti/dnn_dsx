@@ -30,11 +30,12 @@ def round_to(n, precision):
     return int(round(n / precision) * precision)
 
 #given other dims and a target number of FLOPS per image, select the number of filters (i.e. num_output)
-def choose_num_output(filterH, filterW, ch, activH, activW, flop_per_img_target, n_layers):
-    flops_per_filt = filterH * filterW * ch * activH * activW * 2
+def choose_num_output(filterH, filterW, ch, activH, activW, mflop_per_img_target, n_layers):
+    flop_per_filt = filterH * filterW * ch * activH * activW * 2
+    mflop_per_filt = flop_per_filt / 1e6
 
-    #goal is for each layer to have (flop_per_img_target / n_layers) FLOPS.
-    nfilt = flop_per_img_target / (flops_per_filt * n_layers) 
+    #goal is for each layer to have (mflop_per_img_target / n_layers) FLOPS.
+    nfilt = mflop_per_img_target / (mflop_per_filt * n_layers) 
 
     #TODO: round to nearest 8
     return nfilt
@@ -67,11 +68,11 @@ def StickNet(batch_size, s):
     _numPoolings = 1 #for indexing 'conv2_1', etc.
     _ch=3
     [activH, activW] = est_activ_size(inImgH, inImgW, _totalStride)
-    n_filt = choose_num_output(1, 1, _ch, activH, activW, s['flop_per_img_target'], s['n_layers']) #only using this for conv1 to avoid oscillations.
+    n_filt = choose_num_output(1, 1, _ch, activH, activW, s['mflop_per_img_target'], s['n_layers']) #only using this for conv1 to avoid oscillations.
     n_filt = round_to(n_filt, round_to_nearest) #make divisible by 8
 
     #FIXME: somehow account for num_output produced by conv1 when selecting number of filters for conv2. (else, conv2 goes way over budget on flops.)
-    # perhaps we need to find the number N such that N^2*activations = flop_per_img_target?
+    # perhaps we need to find the number N such that N^2*activations = mflop_per_img_target?
 
     idx_minor = 1
     idx_major = 1
@@ -83,7 +84,7 @@ def StickNet(batch_size, s):
 
         #select number of filters in this layer:
         #[activH, activW] = est_activ_size(inImgH, inImgW, _totalStride)
-        #n_filt = choose_num_output(1, 1, _ch, activH, activW, s['flop_per_img_target'], s['n_layers']) 
+        #n_filt = choose_num_output(1, 1, _ch, activH, activW, s['mflop_per_img_target'], s['n_layers']) 
         #TODO: to avoid oscillations, perhaps just use choose_num_output for conv1, 
         #      and then just double n_filt whenever we do stride=2.
 
@@ -133,14 +134,14 @@ def dp():
 def get_base_incr_schemes():
     base_incr = []
     #0.5 TF = 500,000,000,000 (per batch of 1024)
-    #per img, we want: 500,000,000 FLOPS.
+    #per img, we want: 500,000,000 FLOPS = 500 MFLOPS.
 
-    #flop_per_img_target = 500000000 #out of memory ... going smaller.
-    #base_incr.append({'flop_per_img_target':flop_per_img_target, 'n_layers':20, 'pool_after':{1:dp(), 5:dp(), 9:dp(), 13:dp()}})
+    #mflop_per_img_target = 500 #out of memory ... going smaller.
+    #base_incr.append({'mflop_per_img_target':mflop_per_img_target, 'n_layers':20, 'pool_after':{1:dp(), 5:dp(), 9:dp(), 13:dp()}})
 
-    for flop_per_img_target in [25000000, 50000000, 100000000, 250000000]:
+    for mflop_per_img_target in [25, 50, 100, 250]:
         for n_layers in [8, 10, 15, 20]:
-            base_incr.append({'flop_per_img_target':flop_per_img_target, 'n_layers':n_layers, 'pool_after':{1:dp(), 5:dp(), 9:dp(), 13:dp()}})
+            base_incr.append({'mflop_per_img_target':mflop_per_img_target, 'n_layers':n_layers, 'pool_after':{1:dp(), 5:dp(), 9:dp(), 13:dp()}})
 
     #TODO: optional 'conv1_override'
 
@@ -153,8 +154,8 @@ def scheme_to_fname(s):
     p = s['pool_after'].keys()
     pstr = '_'.join([str(x) for x in sorted(p)]) #[1,2,4] -> '1_2_4'
 
-    #st = 'nets/StickNet_warmup_%d_layers_%d_flops_pool_%s' %(s['n_layers'], s['flop_per_img_target'], pstr)
-    st = 'nets/StickNet_warmup_%d_flops_%d_layers_pool_%s' %(s['flop_per_img_target'], s['n_layers'], pstr)
+    #st = 'nets/StickNet_warmup_%d_layers_%d_flops_pool_%s' %(s['n_layers'], s['mflop_per_img_target'], pstr)
+    st = 'nets/StickNet_warmup_%d_mflops_%d_layers_pool_%s' %(s['mflop_per_img_target'], s['n_layers'], pstr)
     return st
 
 if __name__ == "__main__":
