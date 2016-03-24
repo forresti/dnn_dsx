@@ -152,9 +152,12 @@ def get_base_incr_schemes():
     #mflop_per_img_target = 500 #out of memory ... going smaller.
     #base_incr.append({'mflop_per_img_target':mflop_per_img_target, 'n_layers':20, 'pool_after':{1:dp(), 5:dp(), 9:dp(), 13:dp()}})
 
+    pool_after = [ {1:dp(), 5:dp(), 9:dp(), 13:dp()}, {1:dp(), 2:dp(), 5:dp(), 9:dp(), 13:dp()} ]
+
     for mflop_per_img_target in [100, 250, 500]:
         for n_layers in [8, 10, 15, 20]:
-            base_incr.append({'mflop_per_img_target':mflop_per_img_target, 'n_layers':n_layers, 'pool_after':{1:dp(), 5:dp(), 9:dp(), 13:dp()}})
+            for p in pool_after:
+                base_incr.append({'mflop_per_img_target':mflop_per_img_target, 'n_layers':n_layers, 'pool_after':p})
 
     #TODO: optional 'conv1_override'
 
@@ -168,7 +171,7 @@ def scheme_to_fname(s):
     pstr = '_'.join([str(x) for x in sorted(p)]) #[1,2,4] -> '1_2_4'
 
     #st = 'nets/StickNet_warmup_%d_layers_%d_flops_pool_%s' %(s['n_layers'], s['mflop_per_img_target'], pstr)
-    st = 'nets/StickNet_warmup_%d_mflops_%d_layers_pool_%s' %(s['mflop_per_img_target'], s['n_layers'], pstr)
+    st = 'nets/StickNet_%d_mflops_%d_layers_pool_%s' %(s['mflop_per_img_target'], s['n_layers'], pstr)
     return st
 
 if __name__ == "__main__":
@@ -190,7 +193,8 @@ if __name__ == "__main__":
         outF = out_dir + '/trainval.prototxt' 
         save_prototxt(net_proto, outF)
 
-        copyfile('warmup_solver.prototxt', out_dir + '/solver.prototxt')
+        #copyfile('warmup_solver.prototxt', out_dir + '/solver.prototxt')
+        copyfile('gentle_solver.prototxt', out_dir + '/solver.prototxt')
 
         n_gpu = 16
         out_gpu_file = out_dir + '/n_gpu.txt'
