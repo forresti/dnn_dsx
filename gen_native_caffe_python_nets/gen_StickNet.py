@@ -1,4 +1,5 @@
 from math import floor
+from math import sqrt
 import os
 #import caffe
 from caffe import Net
@@ -31,11 +32,23 @@ def round_to(n, precision):
 
 #given other dims and a target number of FLOPS per image, select the number of filters (i.e. num_output)
 def choose_num_output(filterH, filterW, ch, activH, activW, mflop_per_img_target, n_layers):
-    flop_per_filt = filterH * filterW * ch * activH * activW * 2
-    mflop_per_filt = flop_per_filt / 1e6
+    #TODO: remove 'ch' from input args, since it's unused
 
     #goal is for each layer to have (mflop_per_img_target / n_layers) FLOPS.
-    nfilt = mflop_per_img_target / (mflop_per_filt * n_layers) 
+    mflop_per_layer_target = float(mflop_per_img_target)/n_layers
+
+    flop_per_filt = filterH * filterW * activH * activW * 2 #not counting channels or nfilt
+    mflop_per_filt = flop_per_filt / 1e6
+
+    #assume: for several layers downstream of this one, we'll have nfilt_{i-1} = nfilt_i. 
+    #so, we aim for [flop_per_filt * nfilt^2 == mflop_per_img_target]
+    #           --> [nfilt = sqrt(mflop_per_img_target / flop_per_filt)
+
+    nfilt = sqrt(mflop_per_layer_target / mflop_per_filt)
+
+    selected_mflop = nfilt * nfilt * flop_per_filt / 1e6
+
+    print "  mflop_per_layer=%f, mflop_per_img=%f, mflop_per_filt=%f, selected_nfilt=%f, selected_mflop=%f" %(mflop_per_layer_target, mflop_per_img_target, mflop_per_filt, nfilt, selected_mflop) 
 
     #TODO: round to nearest 8
     return nfilt
@@ -57,7 +70,7 @@ TODO:
 def StickNet(batch_size, s):
     inImgH = 224 #TODO: put inImg{H,W} into 's' if necessary.
     inImgW = 224
-    round_to_nearest = 8
+    round_to_nearest = 4
 
     n = NetSpec()
     FireNet_data_layer(n, batch_size) #add data layer to the net
@@ -139,7 +152,7 @@ def get_base_incr_schemes():
     #mflop_per_img_target = 500 #out of memory ... going smaller.
     #base_incr.append({'mflop_per_img_target':mflop_per_img_target, 'n_layers':20, 'pool_after':{1:dp(), 5:dp(), 9:dp(), 13:dp()}})
 
-    for mflop_per_img_target in [25, 50, 100, 250]:
+    for mflop_per_img_target in [100, 250, 500]:
         for n_layers in [8, 10, 15, 20]:
             base_incr.append({'mflop_per_img_target':mflop_per_img_target, 'n_layers':n_layers, 'pool_after':{1:dp(), 5:dp(), 9:dp(), 13:dp()}})
 
