@@ -3,6 +3,7 @@
 #platform='aspire'
 platform='titan'
 
+#dataset='sp1M'
 #dataset='places2'
 dataset='imagenet'
 
@@ -17,6 +18,9 @@ if platform=='aspire':
     elif dataset=='places2':
         train_lmdb='/nscratch/forresti/datasets/places2_train_lmdb/'
         test_lmdb='/nscratch/forresti/datasets/places2_val_lmdb/'
+    elif dataset=='sp1M':
+        train_lmdb='/nscratch/forresti/datasets/sports1M_0_486_train_lmdb/'
+        test_lmdb='/nscratch/forresti/datasets/sports1M_0_486_val_lmdb/'
     else:
         print 'unknown dataset'
 
@@ -27,6 +31,9 @@ if platform=='titan':
     elif dataset=='places2':
         train_lmdb="/lustre/atlas/scratch/forresti/csc103/dnn_exploration/datasets/places2_train_lmdb"
         test_lmdb="/lustre/atlas/scratch/forresti/csc103/dnn_exploration/datasets/places2_val_lmdb"
+    elif dataset=='sp1M':
+        train_lmdb="/lustre/atlas/scratch/forresti/csc103/dnn_exploration/datasets/sports1M_0_486_train_lmdb"
+        test_lmdb="/lustre/atlas/scratch/forresti/csc103/dnn_exploration/datasets/sports1M_0_486_val_lmdb"
     else:
         print 'unknown dataset'
 
